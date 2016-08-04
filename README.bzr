@@ -1,0 +1,9 @@
+This project is to allow easy deciphering of text-based ciphers. We will start with basic functions and add new ones as possible.
+
+The format for this project should be as follows:
+ * cryptoworkbench.csharp contains CLI commands and command reference to each cipher's API.
+ * Analysis functions should be placed in the Analysis class, and simple character operations go in Simple.
+ * CharGrid offers a means to make horizontal and vertical arrays of characters from strings.
+ * Each cipher should implement the abstract AniNIX.Crypto.Cipher and may add unique functions. 
+
+A sample.txt file is provided for test purposes, and a Makefile contains all your compilation rules. The bash script will allow invocation on UNIX machines.

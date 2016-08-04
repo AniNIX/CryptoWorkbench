@@ -1,0 +1,117 @@
+using System;
+using System.Text;
+
+namespace AniNIX.Crypto {
+
+    public class CharGrid {
+
+        protected char[][] theGrid;
+
+        ///<Summary>
+        ///Use this to even out grids so that columnar transpositions can be regular.
+        ///</summary>
+        ///<param name=input>The String to pad</param>
+        ///<param name=width>How wide the grid should be</param>
+        ///<returns>A paddded string</returns>
+        public static String RandPad(String input, int width) {
+            Random sRand = new Random();
+            int mod = input.Length%width; 
+            if (mod == 0) return input;
+            char[] pad = new char[width-mod];
+            for (int i=0; i<pad.Length; i++) {
+                pad[i] = (char)(sRand.Next()%26 + (int)'A');
+            }
+            return input+(new String(pad));
+        }
+
+        private char[][] MakeGrid(String input, int width) {
+            int k=0;
+            int y=(input.Length%width == 0) ? input.Length/width : input.Length/width+1;
+            int remainingLength=input.Length;
+            char[][] newGrid = new char[y][];
+            for (int i=0; i < y; i++) {
+                newGrid[i] = new char[(remainingLength > width) ? width : remainingLength];
+                remainingLength -= width;
+                for (int j=0; j < newGrid[i].Length; j++) {
+                    newGrid[i][j] = input[k++];
+                }
+            }
+            return newGrid;
+        }
+
+        private char[][] MakeVGrid(int length, int width) {
+            int y = (length%width == 0) ? length/width : length/width+1;
+            char[][] newGrid = new char[y][];
+            for (int i = 0; i < y; i++) {
+                newGrid[i] = new char[(length > width) ? width : length];
+                length -= width;
+            }
+            return newGrid;
+        }
+
+        /// <summary>
+        /// Make a horizontal grid from the input of certain width. Make regular if wanted.
+        /// </summary>
+        /// <param name=input>String to make from</param>
+        /// <param name=width>How wide a grid to make </param>
+        /// <param name=isRegular>Should random padding be added to make this not a jagged array</param>
+        public CharGrid(String input,int width,bool isRegular=false) {
+            if (isRegular) input = RandPad(input,width);
+            theGrid = MakeGrid(input,width);
+        }
+
+        /// <summary>
+        /// Make a vertical grid from the input of certain width. Make regular if wanted.
+        /// </summary>
+        /// <param name=input>String to make from</param>
+        /// <param name=width>How wide a grid to make </param>
+        /// <param name=order>What order should the columns be populated in?</param>
+        public CharGrid(String input,int width,int[] order) {
+            // Make a grid first.
+            theGrid = MakeVGrid(input.Length,width);
+            //Populate
+            int k = 0;
+            for (int j = 0; j < theGrid[0].Length; j++) {
+                for (int i = 0; i < theGrid.Length; i++) {
+                    if (i != theGrid.Length-1 || order[j] < theGrid[i].Length) {
+                        theGrid[i][order[j]] = input[k];
+                        k++;
+                    }
+                }
+            }
+
+        }
+
+        public override String ToString() {
+            StringBuilder sb = new StringBuilder();
+            sb.Append(String.Format("{0} {1} ------------->\n",theGrid.Length,theGrid[0].Length));
+            for (int j=0; j<theGrid.Length; j++) {
+                sb.Append("| ");
+                for (int i=0; i<theGrid[j].Length; i++) {
+                    if (Char.IsLetter(theGrid[j][i])) {
+                        sb.Append(String.Format("{0}     ",theGrid[j][i]));
+                    } else {
+                        sb.Append(String.Format("A#{0}  ",(int)theGrid[j][i]));
+                    }
+                }
+                sb.AppendLine();
+            }
+            sb.Append("V\n");
+            return sb.ToString();
+        }
+
+        public char[][] ToArray() {
+            return theGrid;
+        }
+
+        // This is leftover in case you want to debug chargrid
+        /*public static void Main(String[] args) {
+          CharGrid cg = new CharGrid("helloiamanewcipher",5);
+          Console.Write(cg.ToString()); 
+          cg = new CharGrid("four",5,false);
+          Console.Write(cg.ToString());
+          return;
+          }*/
+    }
+}
+

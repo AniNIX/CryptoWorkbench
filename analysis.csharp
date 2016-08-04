@@ -1,0 +1,248 @@
+using System;
+using System.Linq;
+using System.IO;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Collections.Generic;
+
+namespace AniNIX.Crypto {
+    public class Analysis : Cipher {
+
+        public override String Description() { return "Analysis tools"; }
+        public override String Command() { return "analysis"; }
+
+        public Analysis(Workbench w) : base (w) {}
+
+        public override String RunCommand(String workSpace, String inputText, String[] line) {
+            if (workSpace == null || inputText == null || line == null || line.Length < 2) {
+                Console.Error.WriteLine("Malformed!");
+                return workSpace;
+            }
+            switch (line[1]) {
+                case "freq":
+                    Frequency(workSpace);
+                    break;
+                case "freqinfo":
+                    FrequencyInfo();
+                    break;
+                case "one-to-one":
+                    OneToOneQuery(workSpace,inputText);
+                    break;
+                case "diff":
+                    Diff(line);
+                    break;
+                case "charinfo":
+                    CharInfo(line);
+                    break;
+                default:
+                    GetHelp();
+                    break;
+            }
+            return workSpace;
+        }
+
+        public override void GetHelp() {
+            Console.WriteLine("Analysis tools help:\nfreq         -- Get frequency of characters.\nfreqinfo     -- Return the most common English frequencies.\none-to-one   -- See if there is a direct correspondence of characters between cipher and workspace.\ndiff a b     -- get the difference between two characters\ncharinfo     -- get the info about a character");
+        }
+
+
+        public static Dictionary<String,int> FindFrequencies(String workSpace) { 
+            Dictionary<String,int> frequencies = new Dictionary<String,int>();
+            for (int i = 0; i < workSpace.Length; i++) {
+                if (!Char.IsLetter(workSpace[i])) { continue; }
+                String charStr = String.Format("{0}",workSpace[i]);
+                if (frequencies.ContainsKey(charStr)) {
+                    frequencies[charStr] = frequencies[charStr] + 1;
+                } else {
+                    frequencies.Add(charStr,1);
+                }
+            }
+            return frequencies;
+        }
+
+        public static List<String> GetMostCommonLetters(String workSpace) {
+            List<KeyValuePair<String,int>> freqList = FindFrequencies(workSpace).ToList();
+            freqList.Sort((firstPair,nextPair)=>nextPair.Value.CompareTo(firstPair.Value));
+            List<String> returnL = new List<String>();
+            foreach (var item in freqList) {
+                returnL.Add(item.Key);
+            }
+            return returnL;
+        }
+
+        public static List<String> GetDoubles(String workSpace) {
+            List<String> theList = new List<String>();
+            for (int i=1; i<workSpace.Length; i++) {
+                if (workSpace[i] == workSpace[i-1] && !theList.Contains(workSpace[i].ToString())) {
+                    theList.Add(workSpace[i].ToString());
+                }
+            }
+            return theList;
+        }
+
+        public static Dictionary<String,int> GetSubstrings(String workSpace, int length) {
+            Dictionary<string,int> theList = new Dictionary<string,int>();
+            for (int i=1; i<workSpace.Length-(length-1); i++) {
+                String segment = workSpace.Substring(i,length);
+                segment = Regex.Replace(segment, @"[^\w]", string.Empty);
+                if (segment.Length != length) continue;
+                if (theList.ContainsKey(segment)) {
+                    theList[segment] += 1;
+                } else {
+                    theList.Add(segment,1);
+                }
+            }
+            return theList;
+        }
+
+        public static Dictionary<String,int> FindWordsOfLength(int length,String[] bySpace) {
+            Dictionary<String,int> wordsFreq = new Dictionary<String,int>();
+            for (int i = 0; i < bySpace.Length; i++) {
+                if (bySpace[i].Length == length || (bySpace[i].Length == length+1 && Char.IsPunctuation(bySpace[i][length]))) {
+                    if (Char.IsPunctuation(bySpace[i][bySpace[i].Length-1])) {
+                        bySpace[i] = bySpace[i].Substring(0,bySpace[i].Length-1);
+                    }
+                    if (wordsFreq.ContainsKey(bySpace[i])) {
+                        wordsFreq[bySpace[i]] += 1;
+                    } else {
+                        wordsFreq.Add(bySpace[i],1);
+                    }
+                }
+            }
+            return wordsFreq;
+        }
+
+        public static List<String> Top(Dictionary<String,int> theList) {
+            List<KeyValuePair<string,int>> freqList = theList.ToList();
+            List<String> returnL = new List<String>();
+            freqList.Sort((firstPair,nextPair)=>nextPair.Value.CompareTo(firstPair.Value));
+            for (int i = 0; i < 5 && i < freqList.Count; i++) {
+                returnL.Add(freqList[i].Key);
+            }
+            return returnL;
+        }
+
+
+        public static void PrintOrdered(Dictionary<String,int> theList,String header) {
+            List<KeyValuePair<string,int>> freqList = theList.ToList();
+            freqList.Sort((firstPair,nextPair)=>nextPair.Value.CompareTo(firstPair.Value));
+            Console.Write(header);
+            for (int i = 0; i < 5 && i < freqList.Count; i++) {
+                Console.Write(String.Format("({0}){1} ",freqList[i].Key,freqList[i].Value));
+            }
+            Console.WriteLine("");
+        }
+
+        public static void PrintOrdered(List<String> theList,String header) {
+            Console.Write(header);
+            foreach (String str in theList) {
+                Console.Write(str);
+                Console.Write(" ");
+            }
+            Console.WriteLine();
+        }
+
+        public void Frequency(String workSpace) {
+            //Show the individual letter frequeuncy.
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            PrintOrdered(FindFrequencies(workSpace),"Top letters by frequency: "); 
+            //Show the doubled letters
+            Console.ForegroundColor = ConsoleColor.Green;
+            PrintOrdered(GetDoubles(workSpace),"The following letters are doubled in the workspace: ");
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            PrintOrdered(GetSubstrings(workSpace,2),"Top substrings of length 2: ");
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            PrintOrdered(GetSubstrings(workSpace,3),"Top substrings of length 3: ");
+            String[] bySpace = workSpace.Split(' '); 
+            //Find the words of a given length
+            Console.ForegroundColor = ConsoleColor.White;
+            PrintOrdered(FindWordsOfLength(1,bySpace),"Words of length 1: ");
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            PrintOrdered(FindWordsOfLength(2,bySpace),"Words of length 2: ");
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            PrintOrdered(FindWordsOfLength(3,bySpace),"Words of length 3: ");
+            Console.ResetColor();
+        }
+
+        public void FrequencyInfo() {
+            // Thanks to http://norvig.com/mayzner.html for this info.
+            // By letter
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("Letters by frequency:");
+            Console.WriteLine("E T A O I N S R H L D C U M F P G W Y B V K X J Q Z");
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Possible doubles: LL EE SS OO TT FF RR NN PP CC BB MM GG UU ZZ AA");
+            // By Substring 2,3 characters in length
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Top sequences of N characters where N=...");
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("2: th he in er an re on at en nd");
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.WriteLine("3: the and ing ion tio end ati for her ter");
+            // By word 1,2,3 chars in length
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Top words of length...");
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("1: I a");
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("2: of to in is it as be by on he");
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.WriteLine("3: the and for was not are his but had you");
+            Console.ResetColor();
+        }
+
+        public static void OneToOneQuery(String workSpace, String inputText) {
+            Dictionary<char,char> relation = new Dictionary<char,char>();
+            StringBuilder subKey = new StringBuilder(); 
+            StringBuilder encKey = new StringBuilder();
+            subKey.Append("True. These are one-to-one.\n");
+            subKey.Append("\nFinal-to-input key:\n");
+            subKey.Append("sub decrypt ");
+            encKey.Append("sub encrypt ");
+            for (int i = 0; i < workSpace.Length; i++) {
+                if (!Char.IsWhiteSpace(workSpace[i])) { 
+                    if (relation.ContainsKey(workSpace[i])) {
+                        if (relation[workSpace[i]] != inputText[i]) {
+                            Console.Error.WriteLine(String.Format("Character {0} repeated. These are not one-to-one.",workSpace[i]));
+                            return;
+                        }
+                    } else {
+                        relation.Add(workSpace[i],inputText[i]);
+                        encKey.Append(String.Format("{0}={1} ",inputText[i],workSpace[i]));
+                        subKey.Append(String.Format("{0}={1} ",workSpace[i],inputText[i]));
+                    }
+                }
+            }
+            subKey.Append("\nInput-to-final key:");
+            Console.WriteLine(subKey.ToString());
+            Console.WriteLine(encKey.ToString());
+        }
+
+        public void Diff(String[] line) {
+            if (line.Length != 4 || line[2].Length != 1 || line[3].Length != 1) {
+                Console.Error.WriteLine("Bad formatting");
+                return;
+            }
+            char first = line[2][0];
+            char second = line[3][0];
+            Console.WriteLine(String.Format("These are different by {0}.",first-second));
+        }
+
+        public void CharInfo(String[] line) {
+            if (line == null || line.Length != 3 || line[2].Length != 1) { 
+                Console.Error.WriteLine("Malformed");
+                return;
+            }
+            Console.WriteLine(String.Format("Character: {0}\nASCII Value: {1}",line[2][0],(int)line[2][0]));
+            if (Char.IsLetter(line[2][0])) {
+                Console.WriteLine(String.Format("Alphabet index: {0}",(Char.IsUpper(line[2][0])) ? (int)line[2][0] - (int)'A' : (int)line[2][0] - (int)'a'));
+            }
+        }
+        
+        //Analysis doesn't handle encryption or decryption, but we want to use the same code for subscribing.
+        public override String Encrypt(string workSpace,String ciphetText,String[] line) { return workSpace; }
+        public override String Decrypt(string workSpace,String ciphetText,String[] line) { return workSpace; }
+    }
+}
+
+

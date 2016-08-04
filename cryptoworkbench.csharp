@@ -1,0 +1,254 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Collections.Generic;
+using AniNIX.TheRaven;
+
+namespace AniNIX.Crypto {
+    public class Workbench {
+        public string inputText { get;  private set; }
+        public string workSpace { get; private set; }
+        public StringBuilder HelpText = new StringBuilder();
+        public Dictionary<String,Cipher> SwitchCases = new Dictionary<String,Cipher>();
+        private Substitution _sub;
+        private Analysis _analysis;
+        private Simple _simple;
+        private Caesarian _caesar;
+        private Affine _affine;
+        private Vigenere _vig;
+        private ColumnTransposition _col;
+        private Ubchi _ubchi;
+        private bool _isBlind = false;
+
+        private void ReadCipher(String[] line) {
+            if (line == null || line.Length !=2) {
+                Console.WriteLine("Please paste your ciphertext.");
+                string readLn = Console.ReadLine();
+                StringBuilder sb = new StringBuilder();
+                while (readLn != null && !String.IsNullOrWhiteSpace((readLn))) {
+                    sb.AppendLine(readLn);
+                    readLn=Console.ReadLine();
+                }
+                inputText = sb.ToString().Trim();
+            } else { 
+                try { 
+                    StringBuilder sb = new StringBuilder();
+                    StreamReader fileReader = new StreamReader(line[1]);
+                    String lineR = fileReader.ReadLine();
+                    while (lineR != null) {
+                        sb.AppendLine(lineR);
+                        lineR = fileReader.ReadLine();
+                    }
+                    fileReader.Dispose();
+                    fileReader = null;
+                    inputText = sb.ToString().Trim();
+                    Console.WriteLine(String.Format("Read {0}",line[1]));
+                }
+                catch (Exception e) {
+                    Console.Error.WriteLine(e.Message);
+                    inputText = null;
+                }
+
+            }
+            workSpace = inputText;
+
+        }        
+
+        public Workbench(string[] args) {
+            if (args.Length == 0) {
+                ReadCipher(null);
+            } else if (args.Length == 1) {
+                if (args[0].Equals("--blind")) {
+                    this._isBlind = true;
+                    ReadCipher(null);
+                } else {
+                    String[] line = new String[2];
+                    line[0] = "reread";
+                    line[1] = args[0];
+                    ReadCipher(line);            
+                }
+            } else {
+                Console.Error.WriteLine("The only argument allowed is a filename containing the ciphertext or --blind to block filesystem access.");
+                System.Environment.Exit(1);
+            }
+            HelpText.Append("You can get help on any command by running \"<command> help\".\nSuppress printing the cipher with a trailing ;.\nAvailable commands:\n");
+            if (!_isBlind) {
+                HelpText.Append("reread           -- Read in a new cipher\n");
+                HelpText.Append("write            -- write the workspace to a file\n");
+            }
+            HelpText.Append("regex            -- Check for strings with the two regex arguments: [search] [filter]\n");
+            HelpText.Append("reset            -- reset workspace to the ciphertext.\n");
+            HelpText.Append("links            -- show some helpful links\n");
+            HelpText.Append("help             -- show this HelpText\n");
+            HelpText.Append("exit             -- exit and show the result.\n");
+            HelpText.Append("quit             -- alias of exit.\n");
+            _sub = new Substitution(this);
+            _analysis = new Analysis(this);
+            _simple = new Simple(this);
+            _caesar = new Caesarian(this);
+            _affine = new Affine(this);
+            _vig = new Vigenere(this);
+            _col = new ColumnTransposition(this);
+            _ubchi = new Ubchi(this);
+
+        }
+
+        public override String ToString() {
+            StringBuilder currentStatus = new StringBuilder();
+            currentStatus.Append("Input:\n");
+            currentStatus.Append(this.inputText);
+            currentStatus.Append("\n");
+            currentStatus.Append("Workspace:\n");
+            currentStatus.Append(this.workSpace);
+            return currentStatus.ToString();
+        }
+
+        public void Print() {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Input:");
+            Console.ResetColor();
+            Console.WriteLine(this.inputText);
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Workspace:");
+            Console.ResetColor();
+            List<String> topletters = Analysis.GetMostCommonLetters(workSpace).Take(5).ToList();//cyan
+            List<String> bigrams = Analysis.Top(Analysis.GetSubstrings(workSpace,2)); //yellow
+            List<String> trigrams = Analysis.Top(Analysis.GetSubstrings(workSpace,3));//magenta
+            for (int i = 0; i < workSpace.Length; i++) {
+                if (i < workSpace.Length-1 && workSpace[i] == workSpace[i+1]) {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.Write(workSpace[i++]);
+
+                } else if (i < workSpace.Length-2 && trigrams.Contains(workSpace.Substring(i,3))) {
+                    Console.ForegroundColor = ConsoleColor.Magenta;
+                    Console.Write(workSpace[i++]);
+                    Console.Write(workSpace[i++]);
+                } else if (i < workSpace.Length-1 && bigrams.Contains(workSpace.Substring(i,2))) {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.Write(workSpace[i++]);
+                } else if (topletters.Contains(workSpace[i].ToString())) {
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                } 
+                Console.Write(workSpace[i]);
+                Console.ResetColor();
+            }
+            Console.WriteLine(); 
+        }
+
+        public static void HelpfulLinks() {
+            StringBuilder linksText = new StringBuilder();
+            linksText.Append("http://www.visca.com/regexdict/ -- RegEx word dictionary\n");
+            linksText.Append("http://rumkin.com/tools/cipher/ -- Cipher tools\n");
+            linksText.Append("http://norvig.com/mayzner.html  -- Frequency analysis\n");
+            Console.Write(linksText.ToString());
+        }
+
+        public void WriteWorkspace(String workSpace, String[] line) {
+            if (line == null || line.Length != 2) {
+                Console.Error.WriteLine("Need a file.");
+                return;
+            }
+            try {
+                StreamWriter fileWriter = new StreamWriter(line[1],false);
+                fileWriter.WriteLine(workSpace);
+                fileWriter.Dispose();
+                fileWriter = null;
+                Console.WriteLine(String.Format("Wrote file {0}",line[1]));
+            } catch (Exception e) {
+                Console.WriteLine(String.Format("Couldn't write file.\n{0}",e.Message));
+            }
+        }
+
+        public void Run() {
+            Console.ForegroundColor = ConsoleColor.Red;            
+            Console.WriteLine("### Welcome to the AniNIX::CryptoWorkbench ###");
+            Console.ResetColor();
+            try { 
+                string command = "help";
+                string read = "help";
+                string[] line;
+                bool showCipher=true;
+
+                while (command != "exit" && command != "quit") {
+                    foreach (String executable in read.Split(';')) {
+                        if (String.IsNullOrWhiteSpace(executable)) {
+                            showCipher = false;
+                            continue;
+                        }
+
+                        showCipher = true;
+                        line = executable.Trim().Split(' '); 
+                        command = line[0];
+                        switch (command) {
+                            case "reread":
+                                if (!_isBlind) ReadCipher(line);
+                                break;
+                            case "write":
+                                if (!_isBlind) WriteWorkspace(workSpace,line);
+                                break;
+                            case "reset":
+                                this.workSpace = this.inputText;
+                                Console.Clear();
+                                Console.WriteLine("Reset.");
+                                break;
+                            case "links": 
+                                HelpfulLinks();
+                                break;
+                            case "regex":
+                                try {
+                                    if (line.Length == 3) { 
+                                        Console.Write(RavenExecute.Command(String.Format("bash /usr/local/src/CryptoWorkbench/regex-lookup.bash \"{0}\" \"{1}\"",line[1].Replace("\\","\\\\").Replace("$","\\$"),line[2].Replace("\\","\\\\").Replace("$","\\$"))));
+                                    } else if (line.Length == 2) {
+                                        Console.Write(RavenExecute.Command(String.Format("bash /usr/local/src/CryptoWorkbench/regex-lookup.bash \"{0}\"",line[1].Replace("\\","\\\\").Replace("$","\\$"))));
+                                    } else {
+                                        Console.Error.WriteLine("Need at least one search term.");
+                                    }
+                                } catch (Exception e) {
+                                    Console.Error.WriteLine(e.ToString());
+                                }
+                                break;
+                            case "help":
+                                Console.WriteLine(HelpText.ToString());
+                                break;
+                            case "exit": 
+                            case "quit":
+                                throw new Exception("");
+                            default: 
+                                try {
+                                    workSpace = SwitchCases[command].RunCommand(this.workSpace,this.inputText,line); 
+                                } catch (Exception e) { 
+                                    Console.Error.WriteLine("Command not found.");
+                                }
+                                break;
+                        }
+                    }
+                    if (showCipher) Print();
+                    Console.Write("\nWhat command would you like to execute?\n");
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.Write("|");
+                    Console.ResetColor();
+                    Console.Write("> ");
+                    read = Console.ReadLine().Trim();
+                }
+            } catch (Exception e) {
+                Console.Error.WriteLine(e.Message);
+            }
+
+            finally { 
+                Console.WriteLine("\nFinal result:");
+                this.Print();
+            }
+        }
+
+        public static void Main(string[] args) {
+            Workbench cw = new Workbench(args);
+            try {
+                cw.Run();
+            } catch (NullReferenceException e) {
+                Console.Error.WriteLine(String.Format("Caught {0}",e.GetType().ToString()));
+            }
+        }
+    }
+}
+

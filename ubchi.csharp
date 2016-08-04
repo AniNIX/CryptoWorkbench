@@ -1,0 +1,39 @@
+using System;
+using System.Linq;
+using System.IO;
+using System.Text;
+using System.Collections.Generic;
+
+namespace AniNIX.Crypto {
+    public class Ubchi : Cipher { 
+
+        public override String Description() { return "The Ubchi cipher\nThis is a regular double-transposition cipher -- it will add some garbage to the end of your string.\nKey format is any word to use for the transposition.\nNOTE: This does not completely match Rumkin, whose implementation is a little flawed."; }
+        public override String Command() { return "ubchi"; }
+
+        public Ubchi(Workbench w) : base (w) {}
+
+        private ColumnTransposition col = new ColumnTransposition();
+
+        public override String Encrypt(String workSpace,String inputText,String[] line) {
+            if (line == null || line.Length != 3) { 
+                Console.Error.WriteLine("Malformed!");
+                return workSpace;
+            }
+            String changed = CharGrid.RandPad(workSpace,line[2].Length);
+            changed = col.Encrypt(changed,inputText,line);
+            changed = col.Encrypt(changed,inputText,line);           
+            return changed;
+        }
+
+        public override String Decrypt(String workSpace,String inputText,String[] line) {
+            if (line == null || line.Length != 3) { 
+                Console.Error.WriteLine("Malformed!");
+                return workSpace;
+            }
+            String changed = col.Decrypt(workSpace,inputText,line);
+            changed = col.Decrypt(changed,inputText,line);
+            return changed; // TODO Remove padding
+        }
+
+    }
+}

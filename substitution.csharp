@@ -1,0 +1,102 @@
+using System;
+using System.IO;
+using System.Text;
+using System.Collections.Generic;
+
+namespace AniNIX.Crypto {
+    public class Substitution : Cipher {
+
+        public char[] EngCommon = {'e','t','a','o','i','n','s','h','r','d','l','u','c','m','w','f','y','g','p','b','v','k','x','j','q','z'};
+
+        public override String Description() { return "Subsitution cipher suite\nKey format is \"E[EEE]=d[ddd]\", where E is the character in the cipher and d is the intended character in the workspace."; }
+        public override String Command() { return "sub"; }
+
+        public Substitution(Workbench w) : base (w) {}
+
+        /// <summary> 
+        /// We should be able to act on a workspace and command line. Most ciphers will sue the same syntax. Those that don't can override.
+        /// </summary>
+        /// <param name=workSpace>The current version of the text being worked on.</param>
+        /// <param name=line>The command sequence.</param>
+        /// <returns>The updated version of the workSpace</returns> 
+        public  override String RunCommand(String workSpace,String inputText,String[] line) {
+            if (workSpace == null || line == null || line.Length < 2) {
+                Console.Error.WriteLine("Malformed request.");
+                return workSpace;
+            }
+            switch (line[1]) {
+                case "encrypt": 
+                    return Encrypt(workSpace,inputText,line);
+                case "decrypt":
+                    return Decrypt(workSpace,inputText,line);
+                case "try-common": 
+                    return TryCommon(inputText);
+                case "help": 
+                    GetHelp();
+                    return workSpace;
+                default:
+                    Console.Error.WriteLine("Invalid command. Type help for more.");
+                    return workSpace;
+            }
+        }
+
+        /// <summary>
+        /// Show the helptext for this cipher. By default, most ciphers will only have encrypt, decrypt, and help functions.
+        /// </summary>
+        /// <param name=line>This is the incoming line and we use it to get the cipher name</param>
+        public  override void GetHelp() {
+            Console.WriteLine(String.Format("Help for the {0} cipher suite.\n{1}\n",Command(),Description()));
+            Console.WriteLine("encrypt key[s]         -- encrypt with the key[s]\ndecrypt key[s]         -- decrypt with the key[s]\ntry-common          -- try common sub keys\nhelp                -- show this helptext.");
+        }
+
+        public override String Encrypt(String workSpace, String cipher, String[] line) {
+            if (line.Length < 3) {
+                Console.Error.WriteLine("Bad formatting.");
+                return workSpace;
+            }
+            char[] changed = workSpace.ToCharArray();
+            for (int i=2; i<line.Length;i++) {
+                if (line[i].Length < 3 || line[i].Length%2 != 1 || line[i][line[i].Length/2] != '=') {
+                    Console.Error.WriteLine("Bad substitution. Aborting.");
+                    /* Console.Error.WriteLine(String.Format("Line length: {0}",line[i].Length));
+                     * Console.Error.WriteLine(String.Format("Line mod 2:  {0}",line[i].Length%2));
+                     * Console.Error.WriteLine(String.Format("Line[length/2+1]: {0}",line[i][line[i].Length/2+1]));
+                     */
+                    return workSpace;
+                }
+                for (int k = 0; k < line[i].Length/2; k++) {
+                    char oldS = line[i].Substring(k,1)[0];
+                    char newS = line[i].Substring(k+line[i].Length/2+1,1)[0];
+                    Console.WriteLine(String.Format("Replacing cipher {0} to be workspace {1}",oldS,newS));
+                    for (int j = 0; j < workSpace.Length; j++) {
+                        if (cipher[j] == oldS) {
+                            changed[j] = newS;
+                        }
+                    }   
+                }                
+            }
+            return new String(changed);
+        }
+
+        public  override String Decrypt(String workSpace, String cipher, String[] line) {
+            return Encrypt(workSpace, cipher, line);
+        }
+
+        public  String TryCommon(String workSpace) {
+            List<String> sortedChars = Analysis.GetMostCommonLetters(workSpace.ToLower());
+            char[] modified = workSpace.ToLower().ToCharArray();
+            char replaceChar;
+            for (int i = 0; i < modified.Length; i++) { 
+                if (!Char.IsLetter(modified[i])) { continue; }
+                Console.WriteLine(String.Format("Character <{0}> occurs {1}st in frequency, corresponding with <{2}> -- replacing...",
+                            modified[i],
+                            sortedChars.IndexOf(modified[i].ToString()),
+                            EngCommon[sortedChars.IndexOf(modified[i].ToString())]));
+                replaceChar = EngCommon[sortedChars.IndexOf(modified[i].ToString())];
+                replaceChar = (workSpace[i] == Char.ToLower(workSpace[i])) ? replaceChar : Char.ToUpper(replaceChar);
+                modified[i] = replaceChar;
+            }
+            return new String(modified);
+        }
+    }
+}

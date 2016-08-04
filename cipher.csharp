@@ -1,0 +1,82 @@
+using System;
+using System.Linq;
+using System.Collections.Generic;
+using System.Text;
+
+namespace AniNIX.Crypto {
+
+    public abstract class Cipher {
+
+
+        //Cipher description to be set by each individual cipher.
+        public abstract String Description();
+        public abstract String Command();
+
+        /// <summary>
+        /// Create a new Cipher
+        /// </summary>
+        /// <returns>Cipher</returns>
+        public Cipher (Workbench w) {
+            string helpString = String.Format("{0} -- {1}\n",this.Command().PadRight(16),this.Description().Split('\n')[0]); 
+            if (!w.HelpText.ToString().Contains(helpString)) {
+                w.HelpText.Append(helpString);
+            }
+            if (!w.SwitchCases.ContainsKey(this.Command())) {
+                w.SwitchCases.Add(this.Command(),this);
+            }
+        }
+        public Cipher() {
+        }
+
+        /// <summary> 
+        /// We should be able to act on a workspace and command line. Most ciphers will sue the same syntax. Those that don't can override.
+        /// </summary>
+        /// <param name=workSpace>The current version of the text being worked on.</param>
+        /// <param name=line>The command sequence.</param>
+        /// <returns>The updated version of the workSpace</returns> 
+        public virtual String RunCommand(String workSpace,String inputText,String[] line) {
+            if (workSpace == null || line == null || line.Length < 2) {
+                Console.Error.WriteLine("Malformed request.");
+                return workSpace;
+            }
+            switch (line[1]) {
+                case "encrypt": 
+                    return Encrypt(workSpace,inputText,line);
+                case "decrypt":
+                    return Decrypt(workSpace,inputText,line);
+                case "help": 
+                    GetHelp();
+                    return workSpace;
+                default:
+                    Console.Error.WriteLine("Invalid command. Type help for more.");
+                    return workSpace;
+            }
+        }
+
+        /// <summary>
+        /// Show the helptext for this cipher. By default, most ciphers will only have encrypt, decrypt, and help functions.
+        /// </summary>
+        /// <param name=line>This is the incoming line and we use it to get the cipher name</param>
+        public virtual void GetHelp() {
+            Console.WriteLine(String.Format("Help for the {0} cipher suite.\n{1}\n",Command(),Description()));
+            Console.WriteLine("encrypt key         -- encrypt with the key\ndecrypt key         -- decrypt with the key\nhelp                -- show this helptext.");
+        }
+
+        /// <summary> 
+        /// All ciphers must be able to encrypt a string.
+        /// </summary>
+        /// <param name=workSpace>The current version of the text being worked on.</param>
+        /// <param name=line>The command sequence.</param>
+        /// <returns>The updated version of the workSpace</returns> 
+        public abstract String Encrypt(string workSpace,String ciphetText,String[] line);
+
+        /// <summary> 
+        /// All ciphers must be able to decrypt a string.
+        /// </summary>
+        /// <param name=workSpace>The current version of the text being worked on.</param>
+        /// <param name=line>The command sequence.</param>
+        /// <returns>The updated version of the workSpace</returns> 
+        public abstract String Decrypt(String workSpace,String inputText,String[] line);
+
+    }
+}

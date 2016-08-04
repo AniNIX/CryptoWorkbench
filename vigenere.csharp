@@ -1,0 +1,77 @@
+using System;
+using System.Linq;
+using System.IO;
+using System.Text;
+using System.Collections.Generic;
+
+namespace AniNIX.Crypto {
+    public class Vigenere : Cipher {
+
+        public override String Description() { return "The basic Vigenere cipher\nKey format is any word to use for the passphrase"; }
+        public override String Command() { return "vig"; }
+
+        public Vigenere(Workbench w) : base (w) {}
+
+        public override String Encrypt(String workSpace,String inputText,String[] line) {
+            if (line == null || line.Length != 3) { 
+                Console.Error.WriteLine("Malformed!");
+                return workSpace;
+            }
+            char[] changed = workSpace.ToCharArray();
+            try { 
+                // line[2] is the key
+                int index = 0;
+                for (int i =0; i < line[2].Length; i++) {
+                    if (!Char.IsLetter(line[2][i])) {
+                        Console.Error.WriteLine("Keys must be only letters.");
+                        return workSpace;
+                    }
+                }
+                for (int i = 0; i <  changed.Length; i++) {
+                    if (Char.IsLetter(changed[i])) {
+                        int baseC = (Char.IsUpper(changed[i])) ? (int)'A' : (int)'a';
+                        int modC = (int)changed[i] - baseC;
+                        int baseK = (Char.IsUpper(line[2][index])) ? (int)'A' : (int)'a';
+                        int modK = (int)line[2][index] - baseK;
+                        changed[i] = (char)(((modC+modK)%26)+baseC);
+                        index = (index+1)%(line[2].Length);
+                    }
+                }
+            } catch (Exception e) {
+                Console.Error.WriteLine(String.Format("Failed!\n{0}",e.Message));
+                return workSpace;
+            }
+            return new String(changed);
+        }
+
+        public override String Decrypt(String workSpace,String inputText,String[] line) {
+            if (line == null || line.Length != 3) { 
+                Console.Error.WriteLine("Malformed!");
+                return workSpace;
+            }
+            char[] changed = workSpace.ToCharArray();
+            try { 
+                // line[2] is the key
+                int index=0;
+                for (int i = 0; i <  changed.Length; i++) {
+                    if (Char.IsLetter(changed[i])) {
+                        int baseC = (Char.IsUpper(changed[i])) ? (int)'A' : (int)'a';
+                        int modC = (int)changed[i] - baseC;
+                        int baseK = (Char.IsUpper(line[2][index])) ? (int)'A' : (int)'a';
+                        int modK = (int)line[2][index] - baseK;
+                        int modResult = (modC - modK)%26;
+                        modResult = (modResult < 0) ? modResult+26 : modResult; // In case modResult is negative, add 26 back
+                        changed[i] = (char)(modResult+baseC);
+                        index = (index+1)%(line[2].Length);
+                    }
+                }
+            } catch (Exception e) {
+                Console.Error.WriteLine(String.Format("Failed!\n{0}",e.Message));
+                return workSpace;
+            }
+            return new String(changed);
+
+        }
+
+    }
+}

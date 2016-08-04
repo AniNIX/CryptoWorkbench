@@ -1,0 +1,90 @@
+using System;
+using System.IO;
+using System.Text;
+using System.Collections.Generic;
+
+namespace AniNIX.Crypto {
+    public class ColumnTransposition : Cipher {
+
+        public override String Description() { return "Column Transposition cipher suite\nFormat is col <command> key1 [key2...]\nThe key format is any word to use for the transposition.\nThis cipher will use an irregular columnar transposition, without padding the input string.\n"; } 
+         public override String Command() { return "col"; }
+
+         public ColumnTransposition(Workbench w) : base (w) {}
+         public ColumnTransposition() {}
+
+        private int[] GetColumnOrder(String key) {
+            List<char> orderList = new List<char>();
+            for (int i = 0; i < key.Length; i++) {
+                orderList.Add(key[i]);
+            }
+            orderList.Sort();
+            char[] charArr = orderList.ToArray();
+            int[] returnOrderIndexes = new int[key.Length];
+            Console.Write("Found key order: ");
+            for (int i = 0; i < key.Length; i++) {
+                for (int j = 0; j < charArr.Length; j++) {
+                    if (key[i] == charArr[j]) {
+                        Console.Write(String.Format("{0} ",j+1));
+                        returnOrderIndexes[j] = i;
+                        break;
+                    }
+                }
+            }
+            Console.WriteLine("");
+            return returnOrderIndexes;
+        }
+
+        public override String Encrypt(String workSpace, String cipher, String[] line) {
+            if (line.Length < 3) {
+                Console.Error.WriteLine("Bad formatting.");
+                return workSpace;
+            }
+            String workSpaceNoNewline = workSpace.Replace("\n","");
+            char[] changed = workSpaceNoNewline.ToCharArray();
+            CharGrid cg = new CharGrid(workSpaceNoNewline,line[2].Length,false);
+            char[][] encryptionGrid = cg.ToArray();
+            int[] keyOrder = GetColumnOrder(line[2]);
+            Console.Write(cg.ToString());
+            int k = 0;
+            for (int j = 0; j < encryptionGrid[0].Length; j++) {
+                for (int i = 0; i < encryptionGrid.Length; i++) {
+                    if (i != (encryptionGrid.Length-1) || keyOrder[j] < encryptionGrid[i].Length) {
+                        changed[k] = encryptionGrid[i][keyOrder[j]];
+                        k++;
+                    }
+                }
+            }
+            String toReturn = new String(changed);
+            for (k = 0; k < workSpace.Length; k++) {
+                if (workSpace[k] == '\n') {
+                    toReturn = toReturn.Insert(k,"\n");
+                }
+            }
+            return toReturn;
+        }
+
+        // TODO 
+        public  override String Decrypt(String workSpace, String cipher, String[] line) {
+            if (line.Length < 3) {
+                Console.Error.WriteLine("Bad formatting.");
+                return workSpace;
+            }
+            String workSpaceNoNewline = workSpace.Replace("\n","");
+            int[] keyOrder = GetColumnOrder(line[2]);
+            CharGrid cg = new CharGrid(workSpaceNoNewline,line[2].Length,keyOrder);
+            Console.Write(cg.ToString());
+            char[][] cgArray = cg.ToArray();
+            StringBuilder sb = new StringBuilder();
+            for (int i=0; i < cgArray.Length; i++) {
+                sb.Append(new String(cgArray[i]));
+            }
+            String toReturn = sb.ToString();
+            for (int i=0; i < workSpace.Length; i++) {
+                if (workSpace[i] == '\n') {
+                    toReturn = toReturn.Insert(i,"\n");
+                }
+            }
+            return toReturn;
+        }
+    }
+}

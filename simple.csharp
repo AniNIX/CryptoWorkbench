@@ -1,0 +1,90 @@
+using System;
+using System.Linq;
+using System.IO;
+using System.Text;
+using System.Collections.Generic;
+
+namespace AniNIX.Crypto {
+    public  class Simple : Cipher {
+        //Cipher description to be set by each cipher.
+        public override String Description() { return "This is a suite of simple text ops."; }
+        public override String Command() { return "simple"; }
+
+        public Simple(Workbench w) : base (w) {}
+
+        /// <summary> 
+        /// We should be able to act on a workspace and command line. Most ciphers will sue the same syntax. Those that don't can override.
+        /// </summary>
+        /// <param name=workSpace>The current version of the text being worked on.</param>
+        /// <param name=line>The command sequence.</param>
+        /// <returns>The updated version of the workSpace</returns> 
+        public override String RunCommand(String workSpace,String inputText,String[] line) {
+            if (workSpace == null || line == null || line.Length < 2) {
+                Console.Error.WriteLine("Malformed request.");
+                return workSpace;
+            }
+            switch (line[1]) {
+                case "shiftup": 
+                    return ShiftUpper(workSpace);
+                case "shiftdown":
+                    return ShiftLower(workSpace);
+                case "stripspace":
+                    return StripSpaces(workSpace);
+                case "reverse":
+                    return ReverseString(workSpace);
+                case "help": 
+                    GetHelp();
+                    return workSpace;
+                default:
+                    Console.Error.WriteLine("Invalid command. Type help for more.");
+                    return workSpace;
+            } 
+        }
+
+        /// <summary>
+        /// Show the helptext for this cipher. By default, most ciphers will only have encrypt, decrypt, and help functions.
+        /// </summary>
+        /// <param name=line>This is the incoming line and we use it to get the cipher name</param>
+        public override void GetHelp() {
+            Console.WriteLine(String.Format("Help for the {0} cipher suite.\n{1}\n",Command(),Description()));
+            Console.WriteLine("shiftup             -- Make all uppercase\nshiftdown           -- make all lowercase\nstripspace          -- strip spaces from String\nreverse           -- reverse the string\nhelp                -- show this helptext.");
+        }
+
+
+        public String ShiftUpper(String workSpace) {
+            char[] changed = workSpace.ToCharArray();
+            for (int i = 0; i <  changed.Length; i++) {
+                if (Char.IsLower(changed[i])) {
+                    changed[i] = Char.ToUpper(changed[i]);
+                }
+            }
+            return new String(changed);
+        }
+
+        public String ShiftLower(String workSpace) {
+            char[] changed = workSpace.ToCharArray();
+            for (int i = 0; i <  changed.Length; i++) {
+                if (Char.IsUpper(changed[i])) {
+                    changed[i] = Char.ToLower(changed[i]);
+                }
+            }
+            return new String(changed);
+        }
+
+        public String StripSpaces(String workSpace) {
+            String changed = workSpace.Replace(" ","");
+            return changed;
+        }
+
+        public String ReverseString(String workSpace) {
+            char[] charArray = workSpace.ToCharArray();
+            Array.Reverse(charArray);
+            return new String(charArray);
+        }
+
+
+        //Simple doesn't handle encryption or decryption, but we want to use the same code for subscribing.
+        public override String Encrypt(string workSpace,String ciphetText,String[] line) { return workSpace; }
+        public override String Decrypt(string workSpace,String ciphetText,String[] line) { return workSpace; }
+    }
+}

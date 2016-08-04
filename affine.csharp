@@ -1,0 +1,81 @@
+using System;
+using System.Linq;
+using System.IO;
+using System.Text;
+using System.Collections.Generic;
+
+namespace AniNIX.Crypto {
+    public class Affine : Cipher {
+
+        public override String Description() { return "The Affine cipher\nKey format is two numbers, where the second number is coprime to the first."; } 
+        public override String Command() {return "affine";} 
+        public Affine(Workbench w) : base (w) {}
+
+        public override String Encrypt(String workSpace,String inputText,String[] line) {
+            if (line == null || line.Length != 4) { 
+                Console.Error.WriteLine("Malformed!");
+                return workSpace;
+            }
+            char[] changed = workSpace.ToCharArray();
+            try { 
+                int a = Int32.Parse(line[2]);
+                try { 
+                    MultiplicativeInverse(a);
+                } catch (Exception e) {
+                    Console.Error.WriteLine(String.Format("Value a <{0}> is not coprime to 26.\n{1}",a,e.Message));
+                    return workSpace;
+                }
+                int b = Int32.Parse(line[3]);
+                for (int i = 0; i <  changed.Length; i++) {
+                    if (Char.IsLetter(changed[i])) {
+                        int baseC = (Char.IsUpper(changed[i])) ? (int)'A' : (int)'a';
+                        int modC = (int)changed[i] - baseC;
+                        changed[i] = (char)(((a*modC+b)%26)+baseC);
+                    }
+                }
+            } catch (Exception e) {
+                Console.Error.WriteLine(String.Format("Failed!\n{0}",e.Message));
+                return workSpace;
+            }
+            return new String(changed);
+        }
+
+        public  int MultiplicativeInverse(int a) {
+            for (int x=1; x < 27; x++) {
+                if ((a*x)%26 == 1) {
+                    Console.WriteLine(String.Format("Found Multiplicative Inverse of {0}",x));
+                    return x;
+                }
+            }
+            throw new Exception("A is not coprime.");
+        }
+
+        public override String Decrypt(String workSpace,String inputText,String[] line) {
+            if (line == null || line.Length != 4) { 
+                Console.Error.WriteLine("Malformed!");
+                return workSpace;
+            }
+            char[] changed = workSpace.ToCharArray();
+            try { 
+                int a = Int32.Parse(line[2]); 
+                int b = Int32.Parse(line[3]);
+                int multiinv = MultiplicativeInverse(a);
+                for (int i = 0; i <  changed.Length; i++) {
+                    if (Char.IsLetter(changed[i])) {
+                        int baseC = (Char.IsUpper(changed[i])) ? (int)'A' : (int)'a';
+                        int modC = (int)changed[i] - baseC;
+                        int modResult = (multiinv * (modC-b))%26;
+                        modResult = (modResult < 0) ? modResult+26 : modResult; // In case modResult is negative, add 26 back
+                        changed[i] = (char)(modResult+baseC);
+                    }
+                }
+            } catch (Exception e) {
+                Console.Error.WriteLine(String.Format("Failed!\n{0}",e.Message));
+                return workSpace;
+            }
+            return new String(changed);
+
+        }
+
+    }
+}

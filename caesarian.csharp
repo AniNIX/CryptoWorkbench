@@ -1,0 +1,88 @@
+using System;
+using System.Linq;
+using System.IO;
+using System.Text;
+using System.Collections.Generic;
+
+namespace AniNIX.Crypto {
+    public class Caesarian : Cipher {
+
+       public override String Description() { return "Caesarian cipher suite\nKey format is a numeric shift."; }
+       public override String Command() { return "caesar"; }
+
+       public Caesarian(Workbench w) : base (w) {}
+
+       public override String RunCommand(String workSpace,String inputText,String[] line) {
+            if (workSpace == null || line == null || line.Length < 2) {
+                Console.Error.WriteLine("Malformed request.");
+                return workSpace;
+            }
+            switch (line[1]) {
+                case "encrypt": 
+                    return Encrypt(workSpace,inputText,line);
+                case "decrypt":
+                    return Decrypt(workSpace,inputText,line);
+                case "brute":
+                    BruteForce(workSpace);
+                    return workSpace;
+                default: 
+                    GetHelp();
+                    return workSpace;
+            } 
+        }
+
+         public override void GetHelp() {
+            Console.WriteLine(String.Format("Help for the {0} cipher suite.\n{1}\n",Command(),Description()));
+            Console.WriteLine("encrypt key         -- encrypt with the key\ndecrypt key         -- decrypt with the key\nbrute               -- brute-force for keys\nhelp                -- show this helptext.");
+        }
+
+         public override String Encrypt(String workSpace,String inputText,String[] line) {
+            if (line.Length != 3) {
+                Console.Error.WriteLine("Bad formatting");
+                return workSpace;
+            }
+            int rotation = 0;
+            try { 
+                rotation = Int32.Parse(line[2]);
+            } catch (Exception e) {
+                Console.Error.WriteLine("Error in parsing rotation value -- should be numeric.");
+                Console.Error.WriteLine(e.Message);
+                return workSpace;
+            }
+            char[] modified = workSpace.ToCharArray(); 
+            for (int i = 0; i < modified.Length; i++) { 
+                if (Char.IsLetter(modified[i])) {
+                   int baseC;
+                   int modC;
+                   if (modified[i] < 'a') {
+                       baseC = (int)'A';
+                       modC = (int)modified[i] - (int)'A';
+                   } else {
+                       baseC = (int)'a';
+                       modC = (int)modified[i] - (int)'a';
+                   }
+                   modC = (modC + rotation)%26;
+                   //Debugging
+                   //Console.Write(String.Format("Updating index {0} <{5}> val {1} base {2} mod {3} rotation {4} --to-- ",i,(int)modified[i],baseC,modC,rotation,modified[i]));
+                   modified[i] = (char)(baseC+modC);
+                   //Console.WriteLine(String.Format("<{0}> val {1}",modified[i],baseC+modC));
+                }
+            }
+            return new String(modified);
+        }
+
+       public override String Decrypt(String workSpace,String inputText,String[] line) {
+           return Encrypt(workSpace,inputText,line);
+       }
+
+        public  void BruteForce(String workSpace) {
+            String[] line = new String[3];
+            line[0] = "rot";
+            line[1] = "encrypt";
+            for (int i=0; i<26; i++) {
+                line[2]=i.ToString();
+                Console.Write(String.Format("{0,2}: {1}",i,Encrypt(workSpace,null,line)));
+            }
+        }
+    }
+}

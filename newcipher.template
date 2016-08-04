@@ -1,0 +1,23 @@
+using System;
+using System.Linq;
+using System.IO;
+using System.Text;
+using System.Collections.Generic;
+
+namespace AniNIX.Crypto {
+    public class Template : Cipher {
+
+        public override String Description() { return ; }
+        public override String Command() {return ;} 
+        public Template(Workbench w) : base (w) {}
+
+        public override String Encrypt(String workSpace,String inputText,String[] line) {
+            return new String(changed);
+        }
+
+        public override String Decrypt(String workSpace,String inputText,String[] line) {
+            return new String(changed);
+        }
+
+    }
+}
