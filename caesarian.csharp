@@ -7,12 +7,18 @@ using System.Collections.Generic;
 namespace AniNIX.Crypto {
     public class Caesarian : Cipher {
 
-       public override String Description() { return "Caesarian cipher suite\nKey format is a numeric shift."; }
-       public override String Command() { return "caesar"; }
+        public override String Description() { return "Caesarian cipher suite\nKey format is a numeric shift."; }
+        public override String Command() { return "caesar"; }
+        public Caesarian(Workbench w) : base (w) {}
 
-       public Caesarian(Workbench w) : base (w) {}
-
-       public override String RunCommand(String workSpace,String inputText,String[] line) {
+        /// <summary>
+        /// Decode the user's input and relate to an existing function.
+        /// </summary>
+        /// <param name="workSpace">The working copy of the cipher</param>
+        /// <param name="inputText">The original cipher</param>
+        /// <param name="line">The user input</param>
+        /// <returns>The modified workspace string</returns>
+        public override String RunCommand(String workSpace,String inputText,String[] line) {
             if (workSpace == null || line == null || line.Length < 2) {
                 Console.Error.WriteLine("Malformed request.");
                 return workSpace;
@@ -31,12 +37,24 @@ namespace AniNIX.Crypto {
             } 
         }
 
-         public override void GetHelp() {
+        /// <summary>
+        /// Show this help text
+        /// </summary>
+        public override void GetHelp() {
             Console.WriteLine(String.Format("Help for the {0} cipher suite.\n{1}\n",Command(),Description()));
             Console.WriteLine("encrypt key         -- encrypt with the key\ndecrypt key         -- decrypt with the key\nbrute               -- brute-force for keys\nhelp                -- show this helptext.");
         }
 
-         public override String Encrypt(String workSpace,String inputText,String[] line) {
+
+        /// <summary>
+        /// Encrypt a string with the cipher
+        /// </summary>
+        /// <param name="workSpace">The working copy of the cipher</param>
+        /// <param name="inputText">The original cipher</param>
+        /// <param name="line">The user input</param>
+        /// <returns>The encrypted string</returns>
+        public override String Encrypt(String workSpace,String inputText,String[] line) {
+            // Validate input
             if (line.Length != 3) {
                 Console.Error.WriteLine("Bad formatting");
                 return workSpace;
@@ -50,31 +68,35 @@ namespace AniNIX.Crypto {
                 return workSpace;
             }
             char[] modified = workSpace.ToCharArray(); 
+
+            //For each character in the workSpace, rotate it by the offset given.
             for (int i = 0; i < modified.Length; i++) { 
                 if (Char.IsLetter(modified[i])) {
-                   int baseC;
-                   int modC;
-                   if (modified[i] < 'a') {
-                       baseC = (int)'A';
-                       modC = (int)modified[i] - (int)'A';
-                   } else {
-                       baseC = (int)'a';
-                       modC = (int)modified[i] - (int)'a';
-                   }
-                   modC = (modC + rotation)%26;
-                   //Debugging
-                   //Console.Write(String.Format("Updating index {0} <{5}> val {1} base {2} mod {3} rotation {4} --to-- ",i,(int)modified[i],baseC,modC,rotation,modified[i]));
-                   modified[i] = (char)(baseC+modC);
-                   //Console.WriteLine(String.Format("<{0}> val {1}",modified[i],baseC+modC));
+                    int baseC;
+                    int modC;
+                    // Have to account for case.
+                    if (modified[i] < 'a') {
+                        baseC = (int)'A';
+                        modC = (int)modified[i] - (int)'A';
+                    } else {
+                        baseC = (int)'a';
+                        modC = (int)modified[i] - (int)'a';
+                    }
+                    modC = (modC + rotation)%26;
+                    modified[i] = (char)(baseC+modC);
                 }
             }
             return new String(modified);
         }
+        
+        // This is a dummy override.
+        public override String Decrypt(String workSpace,String inputText,String[] line) {
+            return Encrypt(workSpace,inputText,line);
+        }
 
-       public override String Decrypt(String workSpace,String inputText,String[] line) {
-           return Encrypt(workSpace,inputText,line);
-       }
-
+        /// <summary>
+        /// Try rotating through all 26 possible combinations.
+        /// </summary>
         public  void BruteForce(String workSpace) {
             String[] line = new String[3];
             line[0] = "rot";

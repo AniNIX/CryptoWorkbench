@@ -12,6 +12,13 @@ namespace AniNIX.Crypto {
 
         public Vigenere(Workbench w) : base (w) {}
 
+        /// <summary>
+        /// Encrypt a string with the cipher. Encryption and decryption work like a substitution but is rotated with a key.
+        /// </summary>
+        /// <param name="workSpace">The working copy of the cipher</param>
+        /// <param name="inputText">The original cipher</param>
+        /// <param name="line">The user input</param>
+        /// <returns>The encrypted string</returns>
         public override String Encrypt(String workSpace,String inputText,String[] line) {
             if (line == null || line.Length != 3) { 
                 Console.Error.WriteLine("Malformed!");
@@ -27,6 +34,7 @@ namespace AniNIX.Crypto {
                         return workSpace;
                     }
                 }
+                // For each letter in the workspace, substitute with an offset given by the key. Rotate which letter in the key is used.
                 for (int i = 0; i <  changed.Length; i++) {
                     if (Char.IsLetter(changed[i])) {
                         int baseC = (Char.IsUpper(changed[i])) ? (int)'A' : (int)'a';
@@ -44,6 +52,13 @@ namespace AniNIX.Crypto {
             return new String(changed);
         }
 
+        /// <summary>
+        /// Decrypt a string with the cipher. Like the encryption method, we decrypt by removing the offset as given by the key.
+        /// </summary>
+        /// <param name="workSpace">The working copy of the cipher</param>
+        /// <param name="inputText">The original cipher</param>
+        /// <param name="line">The user input</param>
+        /// <returns>The decrypted string</returns>
         public override String Decrypt(String workSpace,String inputText,String[] line) {
             if (line == null || line.Length != 3) { 
                 Console.Error.WriteLine("Malformed!");

@@ -8,11 +8,15 @@ namespace AniNIX.Crypto {
 
         public override String Description() { return "Column Transposition cipher suite\nFormat is col <command> key1 [key2...]\nThe key format is any word to use for the transposition.\nThis cipher will use an irregular columnar transposition, without padding the input string.\n"; } 
          public override String Command() { return "col"; }
-
          public ColumnTransposition(Workbench w) : base (w) {}
          public ColumnTransposition() {}
 
+         /// <summary> 
+         /// Get the order of columns from a key
+         /// </summary>
+         /// <returns>an array of ints indicating order</returns>
         private int[] GetColumnOrder(String key) {
+            // Create an ordered list and sort from the key.
             List<char> orderList = new List<char>();
             for (int i = 0; i < key.Length; i++) {
                 orderList.Add(key[i]);
@@ -21,6 +25,7 @@ namespace AniNIX.Crypto {
             char[] charArr = orderList.ToArray();
             int[] returnOrderIndexes = new int[key.Length];
             Console.Write("Found key order: ");
+            // for each character in the key, find the index in tke sorted array
             for (int i = 0; i < key.Length; i++) {
                 for (int j = 0; j < charArr.Length; j++) {
                     if (key[i] == charArr[j]) {
@@ -34,18 +39,29 @@ namespace AniNIX.Crypto {
             return returnOrderIndexes;
         }
 
+        /// <summary>
+        /// Encrypt a string with the cipher. See https://en.wikipedia.org/wiki/Transposition_cipher#Columnar_transposition for an example of how this works.
+        /// </summary>
+        /// <param name="workSpace">The working copy of the cipher</param>
+        /// <param name="inputText">The original cipher</param>
+        /// <param name="line">The user input</param>
+        /// <returns>The encrypted string</returns>
         public override String Encrypt(String workSpace, String cipher, String[] line) {
             if (line.Length < 3) {
                 Console.Error.WriteLine("Bad formatting.");
                 return workSpace;
             }
+            //Remove newlines.
             String workSpaceNoNewline = workSpace.Replace("\n","");
             char[] changed = workSpaceNoNewline.ToCharArray();
+            // Create a grid from the key.
             CharGrid cg = new CharGrid(workSpaceNoNewline,line[2].Length,false);
             char[][] encryptionGrid = cg.ToArray();
+            //Get the key order. 
             int[] keyOrder = GetColumnOrder(line[2]);
             Console.Write(cg.ToString());
             int k = 0;
+            // Replace each character by the character in the right place in the character grid.
             for (int j = 0; j < encryptionGrid[0].Length; j++) {
                 for (int i = 0; i < encryptionGrid.Length; i++) {
                     if (i != (encryptionGrid.Length-1) || keyOrder[j] < encryptionGrid[i].Length) {
@@ -55,6 +71,7 @@ namespace AniNIX.Crypto {
                 }
             }
             String toReturn = new String(changed);
+            //Re-insert newlines.
             for (k = 0; k < workSpace.Length; k++) {
                 if (workSpace[k] == '\n') {
                     toReturn = toReturn.Insert(k,"\n");
@@ -63,22 +80,33 @@ namespace AniNIX.Crypto {
             return toReturn;
         }
 
-        // TODO 
+       /// <summary>
+       /// Decrypt a string with the cipher
+       /// </summary>
+       /// <param name="workSpace">The working copy of the cipher</param>
+       /// <param name="inputText">The original cipher</param>
+       /// <param name="line">The user input</param>
+       /// <returns>The decrypted string</returns> 
         public  override String Decrypt(String workSpace, String cipher, String[] line) {
             if (line.Length < 3) {
                 Console.Error.WriteLine("Bad formatting.");
                 return workSpace;
             }
+            // Remove newlines.
             String workSpaceNoNewline = workSpace.Replace("\n","");
+            // Find the key order.
             int[] keyOrder = GetColumnOrder(line[2]);
+            // Create a new chargrid to solve from.
             CharGrid cg = new CharGrid(workSpaceNoNewline,line[2].Length,keyOrder);
             Console.Write(cg.ToString());
             char[][] cgArray = cg.ToArray();
             StringBuilder sb = new StringBuilder();
+            // For each row, read the row and add to the solution.
             for (int i=0; i < cgArray.Length; i++) {
                 sb.Append(new String(cgArray[i]));
             }
             String toReturn = sb.ToString();
+            // Add back in the newlines.
             for (int i=0; i < workSpace.Length; i++) {
                 if (workSpace[i] == '\n') {
                     toReturn = toReturn.Insert(i,"\n");

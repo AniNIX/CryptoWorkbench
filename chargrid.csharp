@@ -24,6 +24,12 @@ namespace AniNIX.Crypto {
             return input+(new String(pad));
         }
 
+        /// <summary>
+        /// Create a grid from the input and  row length
+        /// </summary>
+        /// <param name="input">The string to make the grid from</param>
+        /// <param name="width">The width of a row</param>
+        /// <returns>a grid</returns>
         private char[][] MakeGrid(String input, int width) {
             int k=0;
             int y=(input.Length%width == 0) ? input.Length/width : input.Length/width+1;
@@ -39,6 +45,12 @@ namespace AniNIX.Crypto {
             return newGrid;
         }
 
+        /// <summary>
+        /// Create a grid from a width and length 
+        /// </summary>
+        /// <param name="length">The  length of a column </param>
+        /// <param name="width">The width of a row</param>
+        /// <returns>a grid</returns>
         private char[][] MakeVGrid(int length, int width) {
             int y = (length%width == 0) ? length/width : length/width+1;
             char[][] newGrid = new char[y][];
@@ -82,12 +94,19 @@ namespace AniNIX.Crypto {
 
         }
 
+        /// <summary>
+        /// Create a string representation
+        /// </summary>
+        /// <returns>representation</returns>
         public override String ToString() {
             StringBuilder sb = new StringBuilder();
+            // Include a line to indicate height vs. width
             sb.Append(String.Format("{0} {1} ------------->\n",theGrid.Length,theGrid[0].Length));
+            // Iterate through the arrays
             for (int j=0; j<theGrid.Length; j++) {
                 sb.Append("| ");
                 for (int i=0; i<theGrid[j].Length; i++) {
+                    // Print the letters as either letters or ASCII codes.
                     if (Char.IsLetter(theGrid[j][i])) {
                         sb.Append(String.Format("{0}     ",theGrid[j][i]));
                     } else {
@@ -100,6 +119,10 @@ namespace AniNIX.Crypto {
             return sb.ToString();
         }
 
+        /// <summary>
+        /// Return the array for manipulation
+        /// </summary>
+        /// <returns>the array</returns>
         public char[][] ToArray() {
             return theGrid;
         }

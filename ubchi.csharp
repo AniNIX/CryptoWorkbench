@@ -14,25 +14,42 @@ namespace AniNIX.Crypto {
 
         private ColumnTransposition col = new ColumnTransposition();
 
+        /// <summary>
+        /// Encrypt a string with the cipher
+        /// </summary>
+        /// <param name="workSpace">The working copy of the cipher</param>
+        /// <param name="inputText">The original cipher</param>
+        /// <param name="line">The user input</param>
+        /// <returns>The encrypted string</returns>
         public override String Encrypt(String workSpace,String inputText,String[] line) {
             if (line == null || line.Length != 3) { 
                 Console.Error.WriteLine("Malformed!");
                 return workSpace;
             }
+            // Pad the incoming workspace
             String changed = CharGrid.RandPad(workSpace,line[2].Length);
+            // Transpose twice.
             changed = col.Encrypt(changed,inputText,line);
             changed = col.Encrypt(changed,inputText,line);           
             return changed;
         }
 
+        /// <summary>
+        /// Decrypt a string with the cipher
+        /// </summary>
+        /// <param name="workSpace">The working copy of the cipher</param>
+        /// <param name="inputText">The original cipher</param>
+        /// <param name="line">The user input</param>
+        /// <returns>The encrypted string</returns>
         public override String Decrypt(String workSpace,String inputText,String[] line) {
             if (line == null || line.Length != 3) { 
                 Console.Error.WriteLine("Malformed!");
                 return workSpace;
             }
+            // De-transpose twice. Without encrypting a number, we don't have a way to programmatically trim.
             String changed = col.Decrypt(workSpace,inputText,line);
             changed = col.Decrypt(changed,inputText,line);
-            return changed; // TODO Remove padding
+            return changed;
         }
 
     }

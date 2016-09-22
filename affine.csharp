@@ -11,21 +11,33 @@ namespace AniNIX.Crypto {
         public override String Command() {return "affine";} 
         public Affine(Workbench w) : base (w) {}
 
+        /// <summary>
+        /// Encrypt a string with the Affine cipher
+        /// </summary>
+        /// <param name="workspace">A parameter for X</param>
+        /// <param name="inputText">A parameter for Y</param>
+        /// <param name="line">The line given by the user</param> 
+        /// <returns>The return value</returns>
         public override String Encrypt(String workSpace,String inputText,String[] line) {
+            // Affine requires two numbers
             if (line == null || line.Length != 4) { 
                 Console.Error.WriteLine("Malformed!");
                 return workSpace;
             }
             char[] changed = workSpace.ToCharArray();
             try { 
+                // Convert the first number to an int
                 int a = Int32.Parse(line[2]);
+                // Validate the first number is coprime to 26.
                 try { 
                     MultiplicativeInverse(a);
                 } catch (Exception e) {
                     Console.Error.WriteLine(String.Format("Value a <{0}> is not coprime to 26.\n{1}",a,e.Message));
                     return workSpace;
                 }
+                // Convert the second number to an int
                 int b = Int32.Parse(line[3]);
+                // For each letter in the workSpace, apply the forumula e(x) = (ax + b) mod m 
                 for (int i = 0; i <  changed.Length; i++) {
                     if (Char.IsLetter(changed[i])) {
                         int baseC = (Char.IsUpper(changed[i])) ? (int)'A' : (int)'a';
@@ -33,6 +45,7 @@ namespace AniNIX.Crypto {
                         changed[i] = (char)(((a*modC+b)%26)+baseC);
                     }
                 }
+            // If there's a problem solving, tell the user.
             } catch (Exception e) {
                 Console.Error.WriteLine(String.Format("Failed!\n{0}",e.Message));
                 return workSpace;
@@ -40,8 +53,14 @@ namespace AniNIX.Crypto {
             return new String(changed);
         }
 
-        public  int MultiplicativeInverse(int a) {
+        /// <summary>
+        /// Find the multiplicative inverse of a number. 
+        /// </summary>
+        /// <param name="a">A number</param>
+        /// <returns>The inverse</returns>
+        public int MultiplicativeInverse(int a) {
             for (int x=1; x < 27; x++) {
+                //Try to find a number where the input times that number mod 26 is 1. If we roll through 26 numbers and don't find it, there isn't one.
                 if ((a*x)%26 == 1) {
                     Console.WriteLine(String.Format("Found Multiplicative Inverse of {0}",x));
                     return x;
@@ -50,16 +69,27 @@ namespace AniNIX.Crypto {
             throw new Exception("A is not coprime.");
         }
 
+        /// <summary>
+        /// Decrypt a string with the cipher
+        /// </summary>
+        /// <param name="workSpace">A parameter for X</param>
+        /// <param name="inputText">A parameter for Y</param>
+        /// <param name="line">The user input</param>
+        /// <returns>The decrypted string</returns>
         public override String Decrypt(String workSpace,String inputText,String[] line) {
+            // Decryption requires two numbers.
             if (line == null || line.Length != 4) { 
                 Console.Error.WriteLine("Malformed!");
                 return workSpace;
             }
             char[] changed = workSpace.ToCharArray();
-            try { 
+            try {
+                //Convert both numbers to ints
                 int a = Int32.Parse(line[2]); 
                 int b = Int32.Parse(line[3]);
+                //Find the multiplicative inverse of the first.
                 int multiinv = MultiplicativeInverse(a);
+                // For each character, decrypt with d(x) = a-1(x - b) mod m
                 for (int i = 0; i <  changed.Length; i++) {
                     if (Char.IsLetter(changed[i])) {
                         int baseC = (Char.IsUpper(changed[i])) ? (int)'A' : (int)'a';

@@ -11,6 +11,7 @@ namespace AniNIX.Crypto {
         public string workSpace { get; private set; }
         public StringBuilder HelpText = new StringBuilder();
         public Dictionary<String,Cipher> SwitchCases = new Dictionary<String,Cipher>();
+        // The workbench needs to maintain an instance of each ciphersuite for operation. 
         private Substitution _sub;
         private Analysis _analysis;
         private Simple _simple;
@@ -19,19 +20,28 @@ namespace AniNIX.Crypto {
         private Vigenere _vig;
         private ColumnTransposition _col;
         private Ubchi _ubchi;
+        // If this is true, we will prevent prompt and filesystem access.
         private bool _isBlind = false;
 
+        /// <summary> 
+        /// Read in a cipher either from a filename or from stdin
+        /// <summary>
+        /// <param name="line">user input</param>
         private void ReadCipher(String[] line) {
+            // If a filename's not provided.
             if (line == null || line.Length !=2) {
                 Console.WriteLine("Please paste your ciphertext.");
                 string readLn = Console.ReadLine();
                 StringBuilder sb = new StringBuilder();
+                //Read lines from stdin until a blank line is given.
                 while (readLn != null && !String.IsNullOrWhiteSpace((readLn))) {
                     sb.AppendLine(readLn);
                     readLn=Console.ReadLine();
                 }
+                // The user's input is the trimmed sum of the lines.
                 inputText = sb.ToString().Trim();
             } else { 
+                // Try to read the file into the input.
                 try { 
                     StringBuilder sb = new StringBuilder();
                     StreamReader fileReader = new StreamReader(line[1]);
@@ -45,6 +55,7 @@ namespace AniNIX.Crypto {
                     inputText = sb.ToString().Trim();
                     Console.WriteLine(String.Format("Read {0}",line[1]));
                 }
+                // If there's a problem, input is null.
                 catch (Exception e) {
                     Console.Error.WriteLine(e.Message);
                     inputText = null;
@@ -55,24 +66,34 @@ namespace AniNIX.Crypto {
 
         }        
 
+        /// <summary>
+        /// Create a new workbench from input.
+        /// </summary> 
+        /// <param name="args">the arguments provided for execution</param>
         public Workbench(string[] args) {
+            // If args are null, read from STDIN.
             if (args.Length == 0) {
                 ReadCipher(null);
+                // If there's only one arg and that's --blind, set the blind option and read from stdin.
             } else if (args.Length == 1) {
                 if (args[0].Equals("--blind")) {
                     this._isBlind = true;
                     ReadCipher(null);
+                    // Otherwise, try to use the first argument as a filename.
                 } else {
                     String[] line = new String[2];
                     line[0] = "reread";
                     line[1] = args[0];
                     ReadCipher(line);            
                 }
+                // Otherwise, give some help and exit.
             } else {
                 Console.Error.WriteLine("The only argument allowed is a filename containing the ciphertext or --blind to block filesystem access.");
                 System.Environment.Exit(1);
             }
+            // Seed the helptext.
             HelpText.Append("You can get help on any command by running \"<command> help\".\nSuppress printing the cipher with a trailing ;.\nAvailable commands:\n");
+            // Don't tell users about things they can't use.
             if (!_isBlind) {
                 HelpText.Append("reread           -- Read in a new cipher\n");
                 HelpText.Append("write            -- write the workspace to a file\n");
@@ -81,8 +102,11 @@ namespace AniNIX.Crypto {
             HelpText.Append("reset            -- reset workspace to the ciphertext.\n");
             HelpText.Append("links            -- show some helpful links\n");
             HelpText.Append("help             -- show this HelpText\n");
+            HelpText.Append("print            -- show the current workspace\n");
+            HelpText.Append("display          -- alias of print\n");
             HelpText.Append("exit             -- exit and show the result.\n");
             HelpText.Append("quit             -- alias of exit.\n");
+            // Initialize the ciphersuites.
             _sub = new Substitution(this);
             _analysis = new Analysis(this);
             _simple = new Simple(this);
@@ -94,6 +118,9 @@ namespace AniNIX.Crypto {
 
         }
 
+        /// <summary> 
+        /// Convert this workbench into a readable string.
+        /// </summary>
         public override String ToString() {
             StringBuilder currentStatus = new StringBuilder();
             currentStatus.Append("Input:\n");
@@ -104,6 +131,9 @@ namespace AniNIX.Crypto {
             return currentStatus.ToString();
         }
 
+        /// <summary>
+        /// Display this workbench to stdout with colors.
+        /// </summary>
         public void Print() {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("Input:");
@@ -135,7 +165,10 @@ namespace AniNIX.Crypto {
             }
             Console.WriteLine(); 
         }
-
+        
+        /// <summary>
+        /// Show some helpful links.
+        /// </summary>
         public static void HelpfulLinks() {
             StringBuilder linksText = new StringBuilder();
             linksText.Append("http://www.visca.com/regexdict/ -- RegEx word dictionary\n");
@@ -144,42 +177,61 @@ namespace AniNIX.Crypto {
             Console.Write(linksText.ToString());
         }
 
+        /// <summary>
+        /// Save the workspace to a file
+        /// </summary>
+        /// <param name="workSpace"> what to write </param>
+        /// <param name="line"> user input, which should include a file</param>
         public void WriteWorkspace(String workSpace, String[] line) {
+            // Require a filename.
             if (line == null || line.Length != 2) {
                 Console.Error.WriteLine("Need a file.");
                 return;
             }
             try {
+                // If we are actually given a file, write the workspace to a file and close.
                 StreamWriter fileWriter = new StreamWriter(line[1],false);
                 fileWriter.WriteLine(workSpace);
                 fileWriter.Dispose();
                 fileWriter = null;
                 Console.WriteLine(String.Format("Wrote file {0}",line[1]));
             } catch (Exception e) {
+                // Let the user know the file's not writeable.
                 Console.WriteLine(String.Format("Couldn't write file.\n{0}",e.Message));
             }
         }
 
+        /// <summary>
+        /// Interact with the user.
+        /// </summary>
         public void Run() {
+            // Display the header.
             Console.ForegroundColor = ConsoleColor.Red;            
             Console.WriteLine("### Welcome to the AniNIX::CryptoWorkbench ###");
             Console.ResetColor();
             try { 
+                // Set the initial command to be show the helptext.
                 string command = "help";
                 string read = "help";
                 string[] line;
                 bool showCipher=true;
 
+                // Until the user exits...
                 while (command != "exit" && command != "quit") {
+                    // parse shell-type command unification with semicolons
                     foreach (String executable in read.Split(';')) {
+
+                        // If the command is only whitespace, continue and don't show the cipher.
                         if (String.IsNullOrWhiteSpace(executable)) {
-                            showCipher = false;
+                            showCipher = false; // if the last nonwhitespace character is a semicolon, we won't bother printing.
                             continue;
                         }
 
+                        // Otherwise we will show the cipehr.
                         showCipher = true;
                         line = executable.Trim().Split(' '); 
                         command = line[0];
+                        // Command is first space-delimited entry.
                         switch (command) {
                             case "reread":
                                 if (!_isBlind) ReadCipher(line);
@@ -211,6 +263,10 @@ namespace AniNIX.Crypto {
                             case "help":
                                 Console.WriteLine(HelpText.ToString());
                                 break;
+                            case "display":
+                            case "print":
+                                showCipher = true;
+                                break;
                             case "exit": 
                             case "quit":
                                 throw new Exception("");
@@ -223,7 +279,10 @@ namespace AniNIX.Crypto {
                                 break;
                         }
                     }
+
+                    // Show the cipher if the user asked.
                     if (showCipher) Print();
+                    // Display an AniNIX-standard prompt.
                     Console.Write("\nWhat command would you like to execute?\n");
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.Write("|");
@@ -231,16 +290,22 @@ namespace AniNIX.Crypto {
                     Console.Write("> ");
                     read = Console.ReadLine().Trim();
                 }
+                // If we run into trouble, tell the user.
             } catch (Exception e) {
                 Console.Error.WriteLine(e.Message);
             }
 
+            // When we exit, show the result to the user.
             finally { 
                 Console.WriteLine("\nFinal result:");
                 this.Print();
             }
         }
 
+
+        /// <summary> 
+        /// Create  and execute a workbench program.
+        /// </summary>
         public static void Main(string[] args) {
             Workbench cw = new Workbench(args);
             try {

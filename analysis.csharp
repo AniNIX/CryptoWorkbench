@@ -8,11 +8,22 @@ using System.Collections.Generic;
 namespace AniNIX.Crypto {
     public class Analysis : Cipher {
 
+        private Substitution _sb;
         public override String Description() { return "Analysis tools"; }
         public override String Command() { return "analysis"; }
 
-        public Analysis(Workbench w) : base (w) {}
+        public Analysis(Workbench w) : base (w) {
+            //Analysis needs to be able to read the EngCommon array from the Substition class
+            this._sb = new Substitution(w);
+        }
 
+        /// <summary>
+        /// Decode the user's input and relate to an existing function.
+        /// </summary>
+        /// <param name="workSpace">The working copy of the cipher</param>
+        /// <param name="inputText">The original cipher</param>
+        /// <param name="line">The user input</param>
+        /// <returns>The modified workspace string</returns>
         public override String RunCommand(String workSpace, String inputText, String[] line) {
             if (workSpace == null || inputText == null || line == null || line.Length < 2) {
                 Console.Error.WriteLine("Malformed!");
@@ -41,28 +52,46 @@ namespace AniNIX.Crypto {
             return workSpace;
         }
 
+        /// <summary>
+        /// Show this help text
+        /// </summary>
         public override void GetHelp() {
             Console.WriteLine("Analysis tools help:\nfreq         -- Get frequency of characters.\nfreqinfo     -- Return the most common English frequencies.\none-to-one   -- See if there is a direct correspondence of characters between cipher and workspace.\ndiff a b     -- get the difference between two characters\ncharinfo     -- get the info about a character");
         }
 
-
+        /// <summary>
+        /// Return a dictionary of letters mapped to the number of letters found in the workSpace
+        /// </summary>
+        /// <param name="workSpace">the current workSpace</param>
+        /// <returns>The dictionary of frequencies</returns>
         public static Dictionary<String,int> FindFrequencies(String workSpace) { 
             Dictionary<String,int> frequencies = new Dictionary<String,int>();
+            // For each letter in the workSpace,...
             for (int i = 0; i < workSpace.Length; i++) {
                 if (!Char.IsLetter(workSpace[i])) { continue; }
                 String charStr = String.Format("{0}",workSpace[i]);
+                // If the letter already exists, increment its frequency.
                 if (frequencies.ContainsKey(charStr)) {
                     frequencies[charStr] = frequencies[charStr] + 1;
                 } else {
+                    // Otherwise add it with a frequency of one.
                     frequencies.Add(charStr,1);
                 }
             }
             return frequencies;
         }
 
+        /// <summary>
+        /// Return an ordered list of the most common letters in the workSpace
+        /// </summary>
+        /// <param name="workSpace">The user workSpace</param>
+        /// <returns>An ordered list</returns>
         public static List<String> GetMostCommonLetters(String workSpace) {
+            // Find the frequencies.
             List<KeyValuePair<String,int>> freqList = FindFrequencies(workSpace).ToList();
+            // Sort the frequencies
             freqList.Sort((firstPair,nextPair)=>nextPair.Value.CompareTo(firstPair.Value));
+            // Pull out the letters in sorted order and return.
             List<String> returnL = new List<String>();
             foreach (var item in freqList) {
                 returnL.Add(item.Key);
@@ -70,8 +99,12 @@ namespace AniNIX.Crypto {
             return returnL;
         }
 
+        /// <summary> Find the doubles in a string </summary>
+        /// <param name="workSpace"> the string to analyze </param>
+        /// <returns> a list of doubles</returns>
         public static List<String> GetDoubles(String workSpace) {
             List<String> theList = new List<String>();
+            // For each character in the input, if the previous character is the same, it's a double. Add it to the list.
             for (int i=1; i<workSpace.Length; i++) {
                 if (workSpace[i] == workSpace[i-1] && !theList.Contains(workSpace[i].ToString())) {
                     theList.Add(workSpace[i].ToString());
@@ -80,12 +113,23 @@ namespace AniNIX.Crypto {
             return theList;
         }
 
+        /// <summary>
+        /// Find the substrings of a given length in the workSpace.
+        /// </summary>
+        /// <param name="workSpace">the workSpace to analyze</param>
+        /// <param name="length"> the length of the substrings to look for</param>
+        /// <returns>the dictionary of substrings by frequency</returns>
         public static Dictionary<String,int> GetSubstrings(String workSpace, int length) {
             Dictionary<string,int> theList = new Dictionary<string,int>();
+            // Start at the beginning of the string, and advance the substring window by one until the substring segment would be outside the workSpace.
             for (int i=1; i<workSpace.Length-(length-1); i++) {
+                // Get the substring
                 String segment = workSpace.Substring(i,length);
+                // Remove whitespace
                 segment = Regex.Replace(segment, @"[^\w]", string.Empty);
+                // If the segment is no longer the length, bypass.
                 if (segment.Length != length) continue;
+                // Otherwise add or increment the segment's frequency.
                 if (theList.ContainsKey(segment)) {
                     theList[segment] += 1;
                 } else {
@@ -95,8 +139,16 @@ namespace AniNIX.Crypto {
             return theList;
         }
 
+        /// <summary>
+        /// find words of a given length. 
+        /// </summary> 
+        /// <param name="length"> The length to look for </length>
+        /// <param name="bySpace"> A string broken down by spaces</param>
+        /// <returns> the words of the length with frequencies </returns>
         public static Dictionary<String,int> FindWordsOfLength(int length,String[] bySpace) {
             Dictionary<String,int> wordsFreq = new Dictionary<String,int>();
+            // TODO Replace this with whitespace and punctuation removal
+            // If the word ends in punctuation and is longer than the length or is equal to the length, add it to the list and track frequency.
             for (int i = 0; i < bySpace.Length; i++) {
                 if (bySpace[i].Length == length || (bySpace[i].Length == length+1 && Char.IsPunctuation(bySpace[i][length]))) {
                     if (Char.IsPunctuation(bySpace[i][bySpace[i].Length-1])) {
@@ -112,6 +164,11 @@ namespace AniNIX.Crypto {
             return wordsFreq;
         }
 
+        /// <summary>
+        /// Get the top entries in a frequency map
+        /// </summary>
+        /// <param name="theList">Frequency map</param>
+        /// <returns>A list of a given length with the top entries</returns>
         public static List<String> Top(Dictionary<String,int> theList) {
             List<KeyValuePair<string,int>> freqList = theList.ToList();
             List<String> returnL = new List<String>();
@@ -122,7 +179,11 @@ namespace AniNIX.Crypto {
             return returnL;
         }
 
-
+        /// <summary> 
+        /// Print an ordered list with the frequency
+        /// </summary>
+        /// <param name="theList"> the frequency map </param>
+        /// <param name="header"> String header </param>
         public static void PrintOrdered(Dictionary<String,int> theList,String header) {
             List<KeyValuePair<string,int>> freqList = theList.ToList();
             freqList.Sort((firstPair,nextPair)=>nextPair.Value.CompareTo(firstPair.Value));
@@ -133,6 +194,11 @@ namespace AniNIX.Crypto {
             Console.WriteLine("");
         }
 
+        /// <summary>
+        /// Print an ordered list
+        /// </summary>
+        /// <param name="theList"> the frequency map </param>
+        /// <param name="header"> String header </param>
         public static void PrintOrdered(List<String> theList,String header) {
             Console.Write(header);
             foreach (String str in theList) {
@@ -142,6 +208,10 @@ namespace AniNIX.Crypto {
             Console.WriteLine();
         }
 
+        ///<summary>
+        /// Analyze a workspace
+        /// <summary>
+        /// <param name="workSpace">workSpace to analyze</param>
         public void Frequency(String workSpace) {
             //Show the individual letter frequeuncy.
             Console.ForegroundColor = ConsoleColor.Cyan;
@@ -164,14 +234,21 @@ namespace AniNIX.Crypto {
             Console.ResetColor();
         }
 
+        /// <summary>
+        /// Show the statistical frequencies.
+        /// </summary>
         public void FrequencyInfo() {
             // Thanks to http://norvig.com/mayzner.html for this info.
             // By letter
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("Letters by frequency:");
-            Console.WriteLine("E T A O I N S R H L D C U M F P G W Y B V K X J Q Z");
+            for (int i=0; i < this._sb.EngCommon.Length; i++) {
+                Console.Write(this._sb.EngCommon[i]);
+                Console.Write(" ");
+            }
+            Console.Write('\n');
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Possible doubles: LL EE SS OO TT FF RR NN PP CC BB MM GG UU ZZ AA");
+            Console.WriteLine("Possible doubles: ll ee ss oo tt ff rr nn pp cc bb mm gg uu zz aa");
             // By Substring 2,3 characters in length
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("Top sequences of N characters where N=...");
@@ -191,8 +268,14 @@ namespace AniNIX.Crypto {
             Console.ResetColor();
         }
 
-        public static void OneToOneQuery(String workSpace, String inputText) {
+        /// <summary>
+        /// Find out if the workSpace has a one-to-one relationship with the input.
+        /// </summary> 
+        /// <param name="workSpace">the workSpace</param>
+        /// <param name="inputText">the user input</param>
+        public bool OneToOneQuery(String workSpace, String inputText) {
             Dictionary<char,char> relation = new Dictionary<char,char>();
+            //Seed the keys so that we print efficiently.
             StringBuilder subKey = new StringBuilder(); 
             StringBuilder encKey = new StringBuilder();
             subKey.Append("True. These are one-to-one.\n");
@@ -200,12 +283,15 @@ namespace AniNIX.Crypto {
             subKey.Append("sub decrypt ");
             encKey.Append("sub encrypt ");
             for (int i = 0; i < workSpace.Length; i++) {
+                // For each non-whitespace character, if the relation is  known, ... 
                 if (!Char.IsWhiteSpace(workSpace[i])) { 
                     if (relation.ContainsKey(workSpace[i])) {
+                        // if the relation doesn't match up, we found the mismatch and should return false.
                         if (relation[workSpace[i]] != inputText[i]) {
                             Console.Error.WriteLine(String.Format("Character {0} repeated. These are not one-to-one.",workSpace[i]));
-                            return;
+                            return false;
                         }
+                        // Otherwise add the new relation pairing.
                     } else {
                         relation.Add(workSpace[i],inputText[i]);
                         encKey.Append(String.Format("{0}={1} ",inputText[i],workSpace[i]));
@@ -213,28 +299,44 @@ namespace AniNIX.Crypto {
                     }
                 }
             }
+            // Print the keys and return true.
             subKey.Append("\nInput-to-final key:");
             Console.WriteLine(subKey.ToString());
             Console.WriteLine(encKey.ToString());
+            return true;
         }
 
-        public void Diff(String[] line) {
+        /// <summary>
+        /// Show the numeric difference between two characters -- useful for identifying Caesarian ciphers
+        /// </summary> 
+        /// <param name="line">The user's input</param>
+        /// <returns>-99 if malformated or the difference between characters.</returns>
+        public int Diff(String[] line) {
+            // If the number of arguments or format is wrong, return -99
             if (line.Length != 4 || line[2].Length != 1 || line[3].Length != 1) {
                 Console.Error.WriteLine("Bad formatting");
-                return;
+                return -99;
             }
+            //Otherwise return -99
             char first = line[2][0];
             char second = line[3][0];
             Console.WriteLine(String.Format("These are different by {0}.",first-second));
+            return (first-second);
         }
 
+        /// <summary>
+        /// Printout the info of a character
+        /// </summary>
+        /// <param name="line">line to analyze</param>
         public void CharInfo(String[] line) {
             if (line == null || line.Length != 3 || line[2].Length != 1) { 
                 Console.Error.WriteLine("Malformed");
                 return;
             }
+            // Print the ascii value of a character.
             Console.WriteLine(String.Format("Character: {0}\nASCII Value: {1}",line[2][0],(int)line[2][0]));
             if (Char.IsLetter(line[2][0])) {
+                // If the character is a letter, include the alphabet index
                 Console.WriteLine(String.Format("Alphabet index: {0}",(Char.IsUpper(line[2][0])) ? (int)line[2][0] - (int)'A' : (int)line[2][0] - (int)'a'));
             }
         }

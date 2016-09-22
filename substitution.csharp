@@ -49,6 +49,13 @@ namespace AniNIX.Crypto {
             Console.WriteLine("encrypt key[s]         -- encrypt with the key[s]\ndecrypt key[s]         -- decrypt with the key[s]\ntry-common          -- try common sub keys\nhelp                -- show this helptext.");
         }
 
+        /// <summary>
+        /// Encrypt a string with the cipher, replacing one character with another. 
+        /// </summary>
+        /// <param name="workSpace">The working copy of the cipher</param>
+        /// <param name="inputText">The original cipher</param>
+        /// <param name="line">The user input</param>
+        /// <returns>The encrypted string</returns>
         public override String Encrypt(String workSpace, String cipher, String[] line) {
             if (line.Length < 3) {
                 Console.Error.WriteLine("Bad formatting.");
@@ -58,17 +65,17 @@ namespace AniNIX.Crypto {
             for (int i=2; i<line.Length;i++) {
                 if (line[i].Length < 3 || line[i].Length%2 != 1 || line[i][line[i].Length/2] != '=') {
                     Console.Error.WriteLine("Bad substitution. Aborting.");
-                    /* Console.Error.WriteLine(String.Format("Line length: {0}",line[i].Length));
-                     * Console.Error.WriteLine(String.Format("Line mod 2:  {0}",line[i].Length%2));
-                     * Console.Error.WriteLine(String.Format("Line[length/2+1]: {0}",line[i][line[i].Length/2+1]));
-                     */
                     return workSpace;
                 }
+                // For each key-value pair...
                 for (int k = 0; k < line[i].Length/2; k++) {
                     char oldS = line[i].Substring(k,1)[0];
                     char newS = line[i].Substring(k+line[i].Length/2+1,1)[0];
                     Console.WriteLine(String.Format("Replacing cipher {0} to be workspace {1}",oldS,newS));
+                    // for each character in the workspace...
                     for (int j = 0; j < workSpace.Length; j++) {
+
+                        // replace the old character with the requested replacement.
                         if (cipher[j] == oldS) {
                             changed[j] = newS;
                         }
@@ -78,14 +85,24 @@ namespace AniNIX.Crypto {
             return new String(changed);
         }
 
+        
+        // This is a dummy for encrypt -- the functions are the same.
         public  override String Decrypt(String workSpace, String cipher, String[] line) {
             return Encrypt(workSpace, cipher, line);
         }
 
+        /// <summary> 
+        /// Perform a frequency analysis and see if ETAOIN substitution will solve the problem. TODO this should look at a dictionary for confirmation.
+        /// </summary>
+        /// <param name="workSpace"> the string to analyze and brute-force</param>
+        /// <returns> an attempted solution. </returns>
         public  String TryCommon(String workSpace) {
+            // Get the frequency analysis
             List<String> sortedChars = Analysis.GetMostCommonLetters(workSpace.ToLower());
+            // Strip to lower for now and replace. TODO ensure all manipulation is done in lower case and restored later.
             char[] modified = workSpace.ToLower().ToCharArray();
             char replaceChar;
+            // For each character in the string, replace with its frequency map equivalent.
             for (int i = 0; i < modified.Length; i++) { 
                 if (!Char.IsLetter(modified[i])) { continue; }
                 Console.WriteLine(String.Format("Character <{0}> occurs {1}st in frequency, corresponding with <{2}> -- replacing...",
