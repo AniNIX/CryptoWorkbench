@@ -274,6 +274,7 @@ namespace AniNIX.Crypto {
                                 try {
                                     workSpace = SwitchCases[command].RunCommand(this.workSpace,this.inputText,line); 
                                 } catch (Exception e) { 
+                                    e.ToString();
                                     Console.Error.WriteLine("Command not found.");
                                 }
                                 break;
