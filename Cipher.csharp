@@ -29,7 +29,7 @@ namespace AniNIX.Crypto {
         }
 
         /// <summary> 
-        /// We should be able to act on a workspace and command line. Most ciphers will sue the same syntax. Those that don't can override.
+        /// We should be able to act on a workspace and command line. Most ciphers will use the same syntax. Those that don't can override.
         /// </summary>
         /// <param name=workSpace>The current version of the text being worked on.</param>
         /// <param name=line>The command sequence.</param>

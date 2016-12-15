@@ -1,7 +1,9 @@
 TMUXSetting != grep -c "cryptoworkbench" /etc/tmux.conf
 
-compile: clean /usr/bin/mcs analysis.csharp substitution.csharp caesarian.csharp cryptoworkbench.csharp
-	/usr/bin/mcs -out:cryptoworkbench.exe *.csharp 2>&1 | grep -v 'is assigned but its value is never used'
+compile: clean /usr/bin/mcs CryptoWorkbench.csharp
+	if [ ! -d ../SharedLibraries ]; then git -C /usr/local/src clone https://aninix.net/foundation/SharedLibraries; fi
+	git -c /usr/local/src/SharedLibraries pull
+	/usr/bin/mcs -out:cryptoworkbench.exe ../SharedLibraries/CSharp/*.csharp *.csharp 2>&1
 	
 test: /usr/bin/mono compile
 	/usr/bin/mono cryptoworkbench.exe ./sample.txt

@@ -3,7 +3,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Collections.Generic;
-using AniNIX.TheRaven;
+using System.Reflection;
+using AniNIX.Shared;
 
 namespace AniNIX.Crypto {
     public class Workbench {
@@ -12,14 +13,7 @@ namespace AniNIX.Crypto {
         public StringBuilder HelpText = new StringBuilder();
         public Dictionary<String,Cipher> SwitchCases = new Dictionary<String,Cipher>();
         // The workbench needs to maintain an instance of each ciphersuite for operation. 
-        private Substitution _sub;
-        private Analysis _analysis;
-        private Simple _simple;
-        private Caesarian _caesar;
-        private Affine _affine;
-        private Vigenere _vig;
-        private ColumnTransposition _col;
-        private Ubchi _ubchi;
+        private List<Cipher> _ciphers = new List<Cipher>();
         // If this is true, we will prevent prompt and filesystem access.
         private bool _isBlind = false;
 
@@ -107,15 +101,11 @@ namespace AniNIX.Crypto {
             HelpText.Append("exit             -- exit and show the result.\n");
             HelpText.Append("quit             -- alias of exit.\n");
             // Initialize the ciphersuites.
-            _sub = new Substitution(this);
-            _analysis = new Analysis(this);
-            _simple = new Simple(this);
-            _caesar = new Caesarian(this);
-            _affine = new Affine(this);
-            _vig = new Vigenere(this);
-            _col = new ColumnTransposition(this);
-            _ubchi = new Ubchi(this);
-
+            Object[] cipherArgs = { (Object)this }; 
+            foreach (Type cipherType in Assembly.GetAssembly(typeof(Cipher)).GetTypes()
+                    .Where(myType => myType.IsClass && !myType.IsAbstract && myType.IsSubclassOf(typeof(Cipher)))) {
+                _ciphers.Add((Cipher)Activator.CreateInstance(cipherType, cipherArgs));
+            }
         }
 
         /// <summary> 
@@ -250,9 +240,9 @@ namespace AniNIX.Crypto {
                             case "regex":
                                 try {
                                     if (line.Length == 3) { 
-                                        Console.Write(RavenExecute.Command(String.Format("bash /usr/local/src/CryptoWorkbench/regex-lookup.bash \"{0}\" \"{1}\"",line[1].Replace("\\","\\\\").Replace("$","\\$"),line[2].Replace("\\","\\\\").Replace("$","\\$"))));
+                                        Console.Write(ExecuteCommand.Run(String.Format("bash /usr/local/src/CryptoWorkbench/regex-lookup.bash \"{0}\" \"{1}\"",line[1].Replace("\\","\\\\").Replace("$","\\$"),line[2].Replace("\\","\\\\").Replace("$","\\$"))));
                                     } else if (line.Length == 2) {
-                                        Console.Write(RavenExecute.Command(String.Format("bash /usr/local/src/CryptoWorkbench/regex-lookup.bash \"{0}\"",line[1].Replace("\\","\\\\").Replace("$","\\$"))));
+                                        Console.Write(ExecuteCommand.Run(String.Format("bash /usr/local/src/CryptoWorkbench/regex-lookup.bash \"{0}\"",line[1].Replace("\\","\\\\").Replace("$","\\$"))));
                                     } else {
                                         Console.Error.WriteLine("Need at least one search term.");
                                     }
