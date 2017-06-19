@@ -1,4 +1,5 @@
 TMUXSetting != grep -c "cryptoworkbench" /etc/tmux.conf
+INSTALLER != curl -s https://aninix.net/foundation/installer-test.bash | /bin/bash
 
 compile: clean /usr/bin/mcs CryptoWorkbench.csharp
 	if [ ! -d ../SharedLibraries ]; then git -C /usr/local/src clone https://aninix.net/foundation/SharedLibraries; fi
@@ -13,17 +14,13 @@ clean:
 
 install: compile /bin/bash bash.cryptoworkbench
 	mv cryptoworkbench.exe /opt
-	chmod 0555 /opt/cryptoworkbench.exe
 	cp bash.cryptoworkbench /usr/local/bin/cryptoworkbench
-	chmod 0555 /usr/local/bin/cryptoworkbench
 	cp captivecrypto.bash /usr/local/bin/captivecrypto
-	chown root:root /usr/local/bin/captivecrypto
-	chmod 0755 /usr/local/bin/captivecrypto
+	make checkperm
 
-webapp: install
-	javac CryptoApplet.java
-	@echo TODO this is a work in progress.
-	@echo Install the CryptoApplet.class and crypto.phpsnip into a webpage for your site.
+checkperm: 
+	chmod 0555 /opt/cryptoworkbench.exe /usr/local/bin/cryptoworkbench /usr/local/bin/captivecrypto
+	chown root:root /usr/local/bin/captivecrypto /opt/cryptoworkbench.exe
 
 sshuser: install ForceCommand.txt
 	grep captivecrypto /etc/shells || echo '/usr/local/bin/captivecrypto' /etc/shells
@@ -36,3 +33,11 @@ tmux: /usr/bin/tmux
 	[ "${TMUXSetting}" -eq 0 ]
 	echo "bind-key -T prefix x new-window cryptoworkbench" >> /etc/tmux.conf
 	echo 'bind-key -T prefix X confirm-before -p "kill-pane #P? (y/n)" kill-pane' >> /etc/tmux.conf
+
+diff: captivecrypto.bash
+	diff captivecrypto.bash /usr/local/bin/captivecrypto 
+	diff ./bash.cryptoworkbench /usr/local/bin/cryptoworkbench
+
+reverse:
+	cat /usr/local/bin/captivecrypto > ./captivecrypto.bash 
+	cat /usr/local/bin/cryptoworkbench > ./bash.cryptoworkbench
