@@ -1,2 +1,5 @@
 CryptoApplet.java
 cryptoworkbench.exe
+pkg/
+src/
+cryptoworkbench-*.pkg.tar.xz
