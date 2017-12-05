@@ -243,6 +243,7 @@ namespace AniNIX.Crypto {
                                         Console.Write(ExecuteCommand.Run(String.Format("bash /usr/local/src/CryptoWorkbench/regex-lookup.bash \"{0}\" \"{1}\"",line[1].Replace("\\","\\\\").Replace("$","\\$"),line[2].Replace("\\","\\\\").Replace("$","\\$"))));
                                     } else if (line.Length == 2) {
                                         Console.Write(ExecuteCommand.Run(String.Format("bash /usr/local/src/CryptoWorkbench/regex-lookup.bash \"{0}\"",line[1].Replace("\\","\\\\").Replace("$","\\$"))));
+                                        Console.WriteLine(); 
                                     } else {
                                         Console.Error.WriteLine("Need at least one search term.");
                                     }

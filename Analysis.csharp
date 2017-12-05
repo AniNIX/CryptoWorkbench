@@ -293,9 +293,12 @@ namespace AniNIX.Crypto {
                         }
                         // Otherwise add the new relation pairing.
                     } else {
-                        relation.Add(workSpace[i],inputText[i]);
-                        encKey.Append(String.Format("{0}={1} ",inputText[i],workSpace[i]));
-                        subKey.Append(String.Format("{0}={1} ",workSpace[i],inputText[i]));
+
+                        if ( workSpace[i] != inputText[i] ) {
+                            relation.Add(workSpace[i],inputText[i]);
+                            encKey.Append(String.Format("{0}={1} ",inputText[i],workSpace[i]));
+                            subKey.Append(String.Format("{0}={1} ",workSpace[i],inputText[i]));
+                        }
                     }
                 }
             }

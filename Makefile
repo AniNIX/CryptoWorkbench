@@ -1,8 +1,5 @@
 INSTALLER != curl -s https://aninix.net/foundation/installer-test.bash | /bin/bash
 
-tester:
-	echo ${pkgbuild}/opt
-
 compile: clean /usr/bin/mcs CryptoWorkbench.csharp
 	if [ ! -d ../SharedLibraries ]; then git -C /usr/local/src clone https://aninix.net/foundation/SharedLibraries; fi
 	git -C /usr/local/src/SharedLibraries pull
