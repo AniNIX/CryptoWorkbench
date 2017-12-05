@@ -8,7 +8,7 @@ namespace AniNIX.Crypto {
 
         public char[] EngCommon = {'e','t','a','o','i','n','s','h','r','d','l','u','c','m','w','f','y','g','p','b','v','k','x','j','q','z'};
 
-        public override String Description() { return "Subsitution cipher suite\nKey format is \"E[EEE]=d[ddd]\", where E is the character in the cipher and d is the intended character in the workspace."; }
+        public override String Description() { return "Substitution ciphers replace characters one-for-one.\nKey format is \"E[EEE]=d[ddd]\", where E is the character in the cipher and d is the intended character in the workspace.\n\nSubstitution can take multiple keys in a single invocation.\n\nExample usage:\nsub decrypt I=j       -- replace each I in the input with j in the workspace.\nsub decrypt IN=jq     -- replace each I in the input with j in the workspace, and each N in the input with q.\nsub decrypt IN=jq K=c -- do the above, and additionally replace each K with c.\n"; }
         public override String Command() { return "sub"; }
 
         public Substitution(Workbench w) : base (w) {}
@@ -32,6 +32,7 @@ namespace AniNIX.Crypto {
                 case "try-common": 
                     return TryCommon(inputText);
                 case "help": 
+                case "":
                     GetHelp();
                     return workSpace;
                 default:
@@ -46,7 +47,7 @@ namespace AniNIX.Crypto {
         /// <param name=line>This is the incoming line and we use it to get the cipher name</param>
         public  override void GetHelp() {
             Console.WriteLine(String.Format("Help for the {0} cipher suite.\n{1}\n",Command(),Description()));
-            Console.WriteLine("encrypt key[s]         -- encrypt with the key[s]\ndecrypt key[s]         -- decrypt with the key[s]\ntry-common          -- try common sub keys\nhelp                -- show this helptext.");
+            Console.WriteLine("Usage:\nsub encrypt key[s]     -- encrypt with the key[s]\nsub decrypt key[s]     -- decrypt with the key[s]\ntry-common            -- try common sub keys\nhelp                  -- show this helptext.");
         }
 
         /// <summary>

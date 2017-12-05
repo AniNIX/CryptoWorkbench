@@ -33,6 +33,7 @@ namespace AniNIX.Crypto {
                 case "reverse":
                     return ReverseString(workSpace);
                 case "help": 
+                case "": 
                     GetHelp();
                     return workSpace;
                 default:
@@ -47,7 +48,7 @@ namespace AniNIX.Crypto {
         /// <param name=line>This is the incoming line and we use it to get the cipher name</param>
         public override void GetHelp() {
             Console.WriteLine(String.Format("Help for the {0} cipher suite.\n{1}\n",Command(),Description()));
-            Console.WriteLine("shiftup             -- Make all uppercase\nshiftdown           -- Make all lowercase\nstripspace          -- strip spaces from String\nreverse             -- reverse the string\nhelp                -- show this helptext.");
+            Console.WriteLine("Usage:\nsimple shiftup             -- Make all uppercase\nsimple shiftdown           -- Make all lowercase\nsimple stripspace          -- strip spaces from String\nsimple reverse             -- reverse the string\nsimple help                -- show this helptext.");
         }
 
 

@@ -7,7 +7,7 @@ using System.Collections.Generic;
 namespace AniNIX.Crypto {
     public class Affine : Cipher {
 
-        public override String Description() { return "The Affine cipher\nKey format is two numbers, where the second number is coprime to the first."; } 
+        public override String Description() { return "The Affine cipher\nKey format is two numbers, where the second number is coprime to the first.\n\nExample: affine encrypt 5 3\n\n"; } 
         public override String Command() {return "affine";} 
         public Affine(Workbench w) : base (w) {}
 
@@ -62,7 +62,6 @@ namespace AniNIX.Crypto {
             for (int x=1; x < 27; x++) {
                 //Try to find a number where the input times that number mod 26 is 1. If we roll through 26 numbers and don't find it, there isn't one.
                 if ((a*x)%26 == 1) {
-                    Console.WriteLine(String.Format("Found Multiplicative Inverse of {0}",x));
                     return x;
                 }
             }

@@ -45,6 +45,7 @@ namespace AniNIX.Crypto {
                 case "decrypt":
                     return Decrypt(workSpace,inputText,line);
                 case "help": 
+                case "": 
                     GetHelp();
                     return workSpace;
                 default:
@@ -58,8 +59,15 @@ namespace AniNIX.Crypto {
         /// </summary>
         /// <param name=line>This is the incoming line and we use it to get the cipher name</param>
         public virtual void GetHelp() {
-            Console.WriteLine(String.Format("Help for the {0} cipher suite.\n{1}\n",Command(),Description()));
-            Console.WriteLine("encrypt key         -- encrypt with the key\ndecrypt key         -- decrypt with the key\nhelp                -- show this helptext.");
+            String command = Command();
+            Console.WriteLine(String.Format("Help for the {0} cipher suite.\n{1}\n",command,Description()));
+            Console.WriteLine("Usage:");
+            Console.Write(command);
+            Console.WriteLine(" encrypt key         -- encrypt with the key");
+            Console.Write(command);
+            Console.WriteLine(" decrypt key         -- decrypt with the key"); 
+            Console.Write(command);
+            Console.WriteLine(" help                -- show this helptext.");
         }
 
         /// <summary> 

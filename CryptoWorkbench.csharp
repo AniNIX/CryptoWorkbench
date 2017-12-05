@@ -24,7 +24,7 @@ namespace AniNIX.Crypto {
         private void ReadCipher(String[] line) {
             // If a filename's not provided.
             if (line == null || line.Length !=2) {
-                Console.WriteLine("Please paste your ciphertext.");
+                Console.WriteLine("Please paste your ciphertext. End your input with a trailing newline.");
                 string readLn = Console.ReadLine();
                 StringBuilder sb = new StringBuilder();
                 //Read lines from stdin until a blank line is given.
@@ -74,38 +74,40 @@ namespace AniNIX.Crypto {
                     this._isBlind = true;
                     ReadCipher(null);
                     // Otherwise, try to use the first argument as a filename.
+                } else if (args[0].Equals("--help") || args[0].Equals("-h")) {
                 } else {
                     String[] line = new String[2];
                     line[0] = "reread";
                     line[1] = args[0];
                     ReadCipher(line);            
-                }
+                } 
                 // Otherwise, give some help and exit.
             } else {
                 Console.Error.WriteLine("The only argument allowed is a filename containing the ciphertext or --blind to block filesystem access.");
                 System.Environment.Exit(1);
             }
             // Seed the helptext.
-            HelpText.Append("You can get help on any command by running \"<command> help\".\nSuppress printing the cipher with a trailing ;.\nAvailable commands:\n");
+            HelpText.Append("Available commands:\n");
             // Don't tell users about things they can't use.
             if (!_isBlind) {
                 HelpText.Append("reread           -- Read in a new cipher\n");
                 HelpText.Append("write            -- write the workspace to a file\n");
             }
-            HelpText.Append("regex            -- Check for strings with the two regex arguments: [search] [filter]\n");
             HelpText.Append("reset            -- reset workspace to the ciphertext.\n");
+            HelpText.Append("regex            -- Check for strings with the two regex arguments: [search] [filter]\n");
             HelpText.Append("links            -- show some helpful links\n");
-            HelpText.Append("help             -- show this HelpText\n");
             HelpText.Append("print            -- show the current workspace\n");
             HelpText.Append("display          -- alias of print\n");
-            HelpText.Append("exit             -- exit and show the result.\n");
-            HelpText.Append("quit             -- alias of exit.\n");
             // Initialize the ciphersuites.
             Object[] cipherArgs = { (Object)this }; 
             foreach (Type cipherType in Assembly.GetAssembly(typeof(Cipher)).GetTypes()
                     .Where(myType => myType.IsClass && !myType.IsAbstract && myType.IsSubclassOf(typeof(Cipher)))) {
                 _ciphers.Add((Cipher)Activator.CreateInstance(cipherType, cipherArgs));
             }
+            HelpText.Append("exit             -- exit and show the result.\n");
+            HelpText.Append("quit             -- alias of exit.\n");
+            HelpText.Append("help             -- show this HelpText\n");
+            HelpText.Append("\nYou can get help on any command by running \"<command> help\".\nSuppress printing the cipher with a trailing ;.\n\nCommand structure is: {module} {operation} [{keypart}]*\n\nExample commands:\n\"caesar encrypt 13\" -- Encrypt the input with a Caesarian cipher of offset 13.\n\"affine help\" -- Get help on the Affine cipher.\n\"simple stripspace\" -- Use the Simple module to remove spaces.\n\"analysis one-to-one\" -- Check if the workspace is a one-to-one correlation with the input.\n\n");
         }
 
         /// <summary> 
@@ -124,7 +126,9 @@ namespace AniNIX.Crypto {
         /// <summary>
         /// Display this workbench to stdout with colors.
         /// </summary>
-        public void Print() {
+        //  <param name="verbose">Set to true if you want verbose prints.
+        public void Print() { Print(false); }
+        public void Print(bool verbose) {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("Input:");
             Console.ResetColor();
@@ -132,6 +136,7 @@ namespace AniNIX.Crypto {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("Workspace:");
             Console.ResetColor();
+            if (verbose) return;
             List<String> topletters = Analysis.GetMostCommonLetters(workSpace).Take(5).ToList();//cyan
             List<String> bigrams = Analysis.Top(Analysis.GetSubstrings(workSpace,2)); //yellow
             List<String> trigrams = Analysis.Top(Analysis.GetSubstrings(workSpace,3));//magenta
@@ -199,10 +204,12 @@ namespace AniNIX.Crypto {
             Console.ForegroundColor = ConsoleColor.Red;            
             Console.WriteLine("### Welcome to the AniNIX::CryptoWorkbench ###");
             Console.ResetColor();
+            Console.WriteLine("Type help for assistance.\n");
+            Print();
             try { 
                 // Set the initial command to be show the helptext.
-                string command = "help";
-                string read = "help";
+                string command = "";
+                string read = "";
                 string[] line;
                 bool showCipher=true;
 
@@ -275,7 +282,7 @@ namespace AniNIX.Crypto {
                     // Show the cipher if the user asked.
                     if (showCipher) Print();
                     // Display an AniNIX-standard prompt.
-                    Console.Write("\nWhat command would you like to execute?\n");
+                    Console.Write("\nCW ");
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.Write("|");
                     Console.ResetColor();

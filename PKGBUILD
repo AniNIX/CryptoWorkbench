@@ -1,6 +1,6 @@
 # Maintainer: Shikoba Kage <darkfeather@aninix.net>
 pkgname=cryptoworkbench
-pkgver=0.1
+pkgver=0.1-1
 pkgrel=1
 epoch=
 pkgdesc="AniNIX::CryptoWorkbench \\\\ Simple Cryptography Utility"

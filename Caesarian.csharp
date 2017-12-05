@@ -7,7 +7,7 @@ using System.Collections.Generic;
 namespace AniNIX.Crypto {
     public class Caesarian : Cipher {
 
-        public override String Description() { return "Caesarian cipher suite\nKey format is a numeric shift."; }
+        public override String Description() { return "Caesarian ciphers shift letters by a numeric offset. Key format is thus a number."; }
         public override String Command() { return "caesar"; }
         public Caesarian(Workbench w) : base (w) {}
 
@@ -42,7 +42,7 @@ namespace AniNIX.Crypto {
         /// </summary>
         public override void GetHelp() {
             Console.WriteLine(String.Format("Help for the {0} cipher suite.\n{1}\n",Command(),Description()));
-            Console.WriteLine("encrypt key         -- encrypt with the key\ndecrypt key         -- decrypt with the key\nbrute               -- brute-force for keys\nhelp                -- show this helptext.");
+            Console.WriteLine("caesar encrypt key         -- encrypt with the key\ncaesar decrypt key         -- decrypt with the key\ncaesar brute               -- brute-force for keys\ncaesar help                -- show this helptext.");
         }
 
 

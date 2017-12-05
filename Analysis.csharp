@@ -9,7 +9,7 @@ namespace AniNIX.Crypto {
     public class Analysis : Cipher {
 
         private Substitution _sb;
-        public override String Description() { return "Analysis tools"; }
+        public override String Description() { return "These are analysis tools to help understand ciphers."; }
         public override String Command() { return "analysis"; }
 
         public Analysis(Workbench w) : base (w) {
@@ -45,8 +45,15 @@ namespace AniNIX.Crypto {
                 case "charinfo":
                     CharInfo(line);
                     break;
-                default:
+                case "hexprint": 
+                    HexPrint(workSpace);
+                    break;
+                case "help":
+                case "":
                     GetHelp();
+                    break;
+                default: 
+                    Console.Error.WriteLine("Invalid command. Type 'analysis help' for more.");
                     break;
             }
             return workSpace;
@@ -56,7 +63,7 @@ namespace AniNIX.Crypto {
         /// Show this help text
         /// </summary>
         public override void GetHelp() {
-            Console.WriteLine("Analysis tools help:\nfreq         -- Get frequency of characters.\nfreqinfo     -- Return the most common English frequencies.\none-to-one   -- See if there is a direct correspondence of characters between cipher and workspace.\ndiff a b     -- get the difference between two characters\ncharinfo     -- get the info about a character");
+            Console.WriteLine("Analysis tools help:\nanalysis freq         -- Get frequency of characters.\nanalysis freqinfo     -- Return the most common English frequencies.\nanalysis one-to-one   -- See if there is a direct correspondence of characters between cipher and workspace.\nanalysis diff a b     -- get the difference between two characters\nanalysis charinfo c   -- get the info about a character c.\nanalysis hexprint -- print the hex and decimal value of each character in the workspace.");
         }
 
         /// <summary>
@@ -341,6 +348,13 @@ namespace AniNIX.Crypto {
             if (Char.IsLetter(line[2][0])) {
                 // If the character is a letter, include the alphabet index
                 Console.WriteLine(String.Format("Alphabet index: {0}",(Char.IsUpper(line[2][0])) ? (int)line[2][0] - (int)'A' : (int)line[2][0] - (int)'a'));
+            }
+        }
+
+        public void HexPrint(String line) {
+            Console.WriteLine("Char - Dec - Hex");
+            foreach (char i in line.ToCharArray()) {
+                Console.WriteLine("{0} -- {1} -- {2}",i,(int)i,Convert.ToByte(i));
             }
         }
         
