@@ -1,18 +1,15 @@
-INSTALLER != curl -s https://aninix.net/foundation/installer-test.bash | /bin/bash
-
-compile: clean /usr/bin/mcs CryptoWorkbench.csharp
-	if [ ! -d ../SharedLibraries ]; then git -C /usr/local/src clone https://aninix.net/foundation/SharedLibraries; fi
-	git -C /usr/local/src/SharedLibraries pull
-	/usr/bin/mcs -out:cryptoworkbench.exe ../SharedLibraries/CSharp/*.csharp *.csharp 2>&1
+compile: /usr/bin/mcs CryptoWorkbench.csharp /opt/aninix/Uniglot/
+	/usr/bin/mcs -out:cryptoworkbench.exe /opt/aninix/Uniglot/CSharp/*.csharp *.csharp 2>&1
 	
 test: /usr/bin/mono compile
+	# TODO This needs to be a pytest battery across the input.
 	echo quit | /usr/bin/mono cryptoworkbench.exe ./sample.txt
 
 clean:
-	if [ -f cryptoworkbench.exe ]; then rm cryptoworkbench.exe; fi
+	for i in `cat .gitignore`; do rm -Rf $$i; done
 
 install: compile /bin/bash bash.cryptoworkbench
-	mkdir -p ${pkgdir}/opt ${pkgdir}/usr/local/bin/ ${pkgdir}/usr/local/bin/
+	mkdir -p ${pkgdir}/opt ${pkgdir}/usr/local/bin/ 
 	mv cryptoworkbench.exe ${pkgdir}/opt
 	cp bash.cryptoworkbench ${pkgdir}/usr/local/bin/cryptoworkbench
 	cp captivecrypto.bash ${pkgdir}/usr/local/bin/captivecrypto
@@ -22,9 +19,10 @@ checkperm:
 	chmod 0555 ${pkgdir}/opt/cryptoworkbench.exe ${pkgdir}/usr/local/bin/cryptoworkbench ${pkgdir}/usr/local/bin/captivecrypto
 	chown root:root ${pkgdir}/usr/local/bin/captivecrypto ${pkgdir}/opt/cryptoworkbench.exe
 
-sshuser: install ForceCommand.txt
+sshuser: install ForceCommand.txt pwgen
 	grep captivecrypto /etc/shells || echo '/usr/local/bin/captivecrypto' /etc/shells
-	id crypto || useradd -k -d /home/crypto -s /usr/local/bin/captivecrypto crypto
+	if ! id crypto &>/dev/null; then useradd -k -d /home/crypto -s /usr/local/bin/captivecrypto crypto;  fi
+	echo "crypto:$(pwgen 24 1)" | chpasswd;
 	cat ./ForceCommand.txt >> /etc/ssh/sshd_config
 	echo crypto | passwd --stdin crypto
 	

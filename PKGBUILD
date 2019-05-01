@@ -1,6 +1,9 @@
 # Maintainer: Shikoba Kage <darkfeather@aninix.net>
 pkgname=cryptoworkbench
-pkgver=0.1."$(git rev-parse HEAD)"
+pkgver=0.1.c1ed369
+pkgver() {
+    printf "0.1.""$(git rev-parse --short HEAD)"
+}
 pkgrel=1
 epoch=
 pkgdesc="AniNIX::CryptoWorkbench \\\\ Simple Cryptography Utility"
@@ -8,7 +11,7 @@ arch=("x86_64")
 url="https://aninix.net/foundation/CryptoWorkbench"
 license=('custom')
 groups=()
-depends=('mono>=5.0.0' 'curl' 'grep' 'bash>=4.4' 'git>=2.13')
+depends=('mono>=5.0.0' 'curl' 'grep' 'bash>=4.4' 'git>=2.13' 'uniglot')
 makedepends=('make>=4.2')
 checkdepends=()
 optdepends=()
@@ -33,7 +36,7 @@ build() {
 }
 
 check() {
-	printf 'quit\n\n' | make -C .. test
+	printf 'quit\n\n' | make -C "${srcdir}/.." test
 }
 
 package() {
