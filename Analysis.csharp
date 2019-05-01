@@ -39,6 +39,9 @@ namespace AniNIX.Crypto {
                 case "one-to-one":
                     OneToOneQuery(workSpace,inputText);
                     break;
+                case "free": 
+                    FindFreeCharacters(workSpace,inputText);
+                    break;
                 case "diff":
                     Diff(line);
                     break;
@@ -280,7 +283,9 @@ namespace AniNIX.Crypto {
         /// </summary> 
         /// <param name="workSpace">the workSpace</param>
         /// <param name="inputText">the user input</param>
-        public bool OneToOneQuery(String workSpace, String inputText) {
+        /// <param name="shouldPrint">Should the program write to stdout</param>
+        /// <returns>A boolean if the query is one-to-one</returns>
+        public bool OneToOneQuery(String workSpace, String inputText, bool shouldPrint=true) {
             Dictionary<char,char> relation = new Dictionary<char,char>();
             //Seed the keys so that we print efficiently.
             StringBuilder subKey = new StringBuilder(); 
@@ -295,7 +300,7 @@ namespace AniNIX.Crypto {
                     if (relation.ContainsKey(workSpace[i])) {
                         // if the relation doesn't match up, we found the mismatch and should return false.
                         if (relation[workSpace[i]] != inputText[i]) {
-                            Console.Error.WriteLine(String.Format("Character {0} repeated. These are not one-to-one.",workSpace[i]));
+                            if (shouldPrint) Console.Error.WriteLine(String.Format("Character {0} repeated. These are not one-to-one.",workSpace[i]));
                             return false;
                         }
                         // Otherwise add the new relation pairing.
@@ -310,10 +315,32 @@ namespace AniNIX.Crypto {
                 }
             }
             // Print the keys and return true.
-            subKey.Append("\nInput-to-final key:");
-            Console.WriteLine(subKey.ToString());
-            Console.WriteLine(encKey.ToString());
+            if (shouldPrint) {
+                subKey.Append("\nInput-to-final key:");
+                Console.WriteLine(subKey.ToString());
+                Console.WriteLine(encKey.ToString());
+            }
             return true;
+        }
+
+        /// <summary> 
+        /// Find the characters unused by the encryption key.
+        /// <summary>
+        /// <param name="workSpace">the workSpace</param>
+        /// <param name="inputText">the user input</param>
+        public void FindFreeCharacters(String workSpace, String inputText) {
+            // Start with a list of all the alphanum characters.
+            List<char> alphanum = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".ToCharArray().OfType<char>().ToList();
+            // Eliminate all of the ones we can.
+            for (int i = 0; i < workSpace.Length; i++) {
+                if (alphanum.Contains(workSpace[i])) alphanum.Remove(workSpace[i]);
+            }
+            // Print the remaining elements.
+            Console.WriteLine("Remaining characters to use in keys:");
+            foreach (char c in alphanum) {
+                Console.Write(c);
+            }
+            Console.WriteLine();
         }
 
         /// <summary>
