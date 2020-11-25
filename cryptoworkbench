@@ -1,0 +1,7 @@
+#!/bin/bash
+if [ -n "$1" ]; then
+    time mono /opt/aninix/CryptoWorkbench/shell.exe "$1";
+else
+    time mono /opt/aninix/CryptoWorkbench/shell.exe;
+fi
+read

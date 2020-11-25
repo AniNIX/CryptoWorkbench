@@ -1,7 +1,0 @@
-#!/bin/bash
-if [ "$1" != "" ]; then
-    time mono /opt/cryptoworkbench.exe "$1";
-else
-    time mono /opt/cryptoworkbench.exe
-fi
-read

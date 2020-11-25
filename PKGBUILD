@@ -1,8 +1,8 @@
 # Maintainer: Shikoba Kage <darkfeather@aninix.net>
 pkgname=cryptoworkbench
-pkgver=0.1.c1ed369
+pkgver=0.2.4b6f343
 pkgver() {
-    printf "0.1.""$(git rev-parse --short HEAD)"
+    printf "0.2.""$(git rev-parse --short HEAD)"
 }
 pkgrel=1
 epoch=
@@ -11,7 +11,7 @@ arch=("x86_64")
 url="https://aninix.net/foundation/CryptoWorkbench"
 license=('custom')
 groups=()
-depends=('mono>=5.0.0' 'curl' 'grep' 'bash>=4.4' 'git>=2.13' 'uniglot')
+depends=('mono>=5.0.0' 'curl' 'grep' 'bash>=4.4' 'git>=2.13' 'Uniglot')
 makedepends=('make>=4.2')
 checkdepends=()
 optdepends=()
