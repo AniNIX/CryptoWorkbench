@@ -1,23 +1,22 @@
-# Maintainer: Shikoba Kage <darkfeather@aninix.net>
-pkgname=cryptoworkbench
-pkgver=0.2.4b6f343
-pkgver() {
-    printf "0.2.""$(git rev-parse --short HEAD)"
-}
-pkgrel=1
-epoch=
-pkgdesc="AniNIX::CryptoWorkbench \\\\ Simple Cryptography Utility"
-arch=("x86_64")
-url="https://aninix.net/foundation/CryptoWorkbench"
-license=('custom')
-groups=()
-depends=('mono>=5.0.0' 'curl' 'grep' 'bash>=4.4' 'git>=2.13' 'Uniglot')
-makedepends=('make>=4.2')
+depends=('mono>=5.0.0' 'curl' 'grep' 'bash>=4.4')
+makedepends=('make>=4.2' 'Uniglot')
 checkdepends=()
 optdepends=()
-provides=('cryptoworkbench')
+pkgname="$(git config remote.origin.url | rev | cut -f 1 -d '/' | rev | sed 's/.git$//')"
+pkgver="$(git describe --tag --abbrev=0)"."$(git rev-parse --short HEAD)"
+pkgrel=1
+pkgrel() { 
+    echo $(( `git log "$(git describe --tag --abbrev=0)"..HEAD | grep -c commit` + 1 ))
+}
+epoch="$(git log | grep -c commit)"
+pkgdesc="$(head -n 1 README.md)"
+arch=("x86_64")
+url="$(git config remote.origin.url | sed 's/.git$//')"
+license=('custom')
+groups=()
+provides=("${pkgname}")
 conflicts=()
-replaces=()
+replaces=("${pkgname,,}", "aninix-${pkgname,,}")
 backup=()
 options=()
 install=
@@ -36,7 +35,8 @@ build() {
 }
 
 check() {
-	printf 'quit\n\n' | make -C "${srcdir}/.." test
+    chmod -R u+r ../pkg
+	make -C .. test
 }
 
 package() {
