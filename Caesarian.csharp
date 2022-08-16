@@ -103,7 +103,7 @@ namespace AniNIX.Crypto {
             line[1] = "encrypt";
             for (int i=0; i<26; i++) {
                 line[2]=i.ToString();
-                Console.Write(String.Format("{0,2}: {1}",i,Encrypt(workSpace,null,line)));
+                Console.Write(String.Format("{0,2}: {1}\n",i,Encrypt(workSpace,null,line)));
             }
         }
     }
